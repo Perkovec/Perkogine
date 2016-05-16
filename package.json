@@ -1,0 +1,25 @@
+{
+  "name": "perkogine",
+  "version": "1.0.0",
+  "description": "2D Web game engine",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Perkovec/Perkogine.git"
+  },
+  "author": "Perkovec",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Perkovec/Perkogine/issues"
+  },
+  "homepage": "https://github.com/Perkovec/Perkogine#readme",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-concat": "^2.6.0",
+    "gulp-eslint": "^2.0.0",
+    "gulp-uglify": "^1.5.3"
+  }
+}
