@@ -42,6 +42,8 @@ Perkogine.Renderer.prototype.Render = function(scene) {
       DrawCircle(object);
     } else if (object instanceof Perkogine.Rectangle) {
       DrawRectangle(object);
+    } else if (object instanceof Perkogine.Ellipse) {
+      DrawEllipse(object);
     }
   }
   
@@ -62,6 +64,23 @@ Perkogine.Renderer.prototype.Render = function(scene) {
                   object.position.y);
     ctx.rotate(Perkogine.Deg2Rad * object.rotation);
     ctx.rect(-object.width / 2, -object.height / 2, object.width, object.height);
+    ctx.fillStyle = object.color;
+    ctx.fill();
+    ctx.strokeStyle = object.borderColor;
+    ctx.strokeWidth = object.strokeWidth;
+    ctx.stroke();
+    ctx.restore();
+  }
+  
+  function DrawEllipse(object) {
+    ctx.beginPath();
+    ctx.save();
+    ctx.translate(object.position.x, 
+                  object.position.y);
+    ctx.rotate(Perkogine.Deg2Rad * object.rotation);
+    ctx.scale(object.width / object.height, 1);
+    
+    ctx.arc(0, 0, object.height / 2, 0, Math.PI * 2, false);
     ctx.fillStyle = object.color;
     ctx.fill();
     ctx.strokeStyle = object.borderColor;
