@@ -25,3 +25,16 @@ Perkogine.Object.prototype.rotateAround = function(origin, angle) {
   
   return this;
 }
+
+Perkogine.Object.prototype.copy = function(original) {
+  this.visible = original.visible;
+  this.position.copy( original.position );
+  this.rotation = original.rotation;
+  this.scale = original.scale;
+  
+  return this;
+}
+
+Perkogine.Object.prototype.clone = function() {
+  return new this.constructor().copy(this);
+};

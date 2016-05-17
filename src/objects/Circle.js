@@ -9,3 +9,7 @@ Perkogine.Circle = function(properties) {
 
 Perkogine.Circle.prototype = Object.create(Perkogine.Object.prototype);
 Perkogine.Circle.prototype.constructor = Perkogine.Circle;
+
+Perkogine.Circle.prototype.clone = function() {
+  return new this.constructor(this).copy(this);
+}

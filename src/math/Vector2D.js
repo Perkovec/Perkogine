@@ -20,4 +20,13 @@ Perkogine.Vector2D.prototype.rotateAround = function(origin, angle){
   
   this.x = Math.cos(angle) * (point.x - origin.x) - Math.sin(angle) * (point.y - origin.y) + origin.x;
   this.y = Math.cos(angle) * (point.y - origin.y) + Math.sin(angle) * (point.x - origin.x) + origin.y;
+  
+  return this;
+}
+
+Perkogine.Vector2D.prototype.copy = function(original) {
+  this.x = original.x;
+  this.y = original.y;
+  
+  return this;
 }

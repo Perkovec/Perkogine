@@ -10,3 +10,7 @@ Perkogine.Ellipse = function(properties) {
 
 Perkogine.Ellipse.prototype = Object.create(Perkogine.Object.prototype);
 Perkogine.Ellipse.prototype.constructor = Perkogine.Ellipse;
+
+Perkogine.Ellipse.prototype.clone = function() {
+  return new this.constructor(this).copy(this);
+}

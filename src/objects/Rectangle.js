@@ -10,3 +10,7 @@ Perkogine.Rectangle = function(properties) {
 
 Perkogine.Rectangle.prototype = Object.create(Perkogine.Object.prototype);
 Perkogine.Rectangle.prototype.constructor = Perkogine.Rectangle;
+
+Perkogine.Rectangle.prototype.clone = function() {
+  return new this.constructor(this).copy(this);
+}
