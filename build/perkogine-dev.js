@@ -26,6 +26,15 @@ Perkogine.Vector2D.prototype.rotateAround = function(origin, angle){
   
   this.x = Math.cos(angle) * (point.x - origin.x) - Math.sin(angle) * (point.y - origin.y) + origin.x;
   this.y = Math.cos(angle) * (point.y - origin.y) + Math.sin(angle) * (point.x - origin.x) + origin.y;
+  
+  return this;
+}
+
+Perkogine.Vector2D.prototype.copy = function(original) {
+  this.x = original.x;
+  this.y = original.y;
+  
+  return this;
 }
 Perkogine.Scene = function() {
   this.objects = [];
@@ -78,6 +87,8 @@ Perkogine.Renderer.prototype.Render = function(scene) {
       DrawCircle(object);
     } else if (object instanceof Perkogine.Rectangle) {
       DrawRectangle(object);
+    } else if (object instanceof Perkogine.Ellipse) {
+      DrawEllipse(object);
     }
   }
   
@@ -98,6 +109,23 @@ Perkogine.Renderer.prototype.Render = function(scene) {
                   object.position.y);
     ctx.rotate(Perkogine.Deg2Rad * object.rotation);
     ctx.rect(-object.width / 2, -object.height / 2, object.width, object.height);
+    ctx.fillStyle = object.color;
+    ctx.fill();
+    ctx.strokeStyle = object.borderColor;
+    ctx.strokeWidth = object.strokeWidth;
+    ctx.stroke();
+    ctx.restore();
+  }
+  
+  function DrawEllipse(object) {
+    ctx.beginPath();
+    ctx.save();
+    ctx.translate(object.position.x, 
+                  object.position.y);
+    ctx.rotate(Perkogine.Deg2Rad * object.rotation);
+    ctx.scale(object.width / object.height, 1);
+    
+    ctx.arc(0, 0, object.height / 2, 0, Math.PI * 2, false);
     ctx.fillStyle = object.color;
     ctx.fill();
     ctx.strokeStyle = object.borderColor;
@@ -133,6 +161,19 @@ Perkogine.Object.prototype.rotateAround = function(origin, angle) {
   
   return this;
 }
+
+Perkogine.Object.prototype.copy = function(original) {
+  this.visible = original.visible;
+  this.position.copy( original.position );
+  this.rotation = original.rotation;
+  this.scale = original.scale;
+  
+  return this;
+}
+
+Perkogine.Object.prototype.clone = function() {
+  return new this.constructor().copy(this);
+};
 Perkogine.Circle = function(properties) {
   Perkogine.Object.call(this, arguments);
   
@@ -144,6 +185,10 @@ Perkogine.Circle = function(properties) {
 
 Perkogine.Circle.prototype = Object.create(Perkogine.Object.prototype);
 Perkogine.Circle.prototype.constructor = Perkogine.Circle;
+
+Perkogine.Circle.prototype.clone = function() {
+  return new this.constructor(this).copy(this);
+}
 Perkogine.Rectangle = function(properties) {
   Perkogine.Object.call(this, arguments);
   
@@ -156,3 +201,23 @@ Perkogine.Rectangle = function(properties) {
 
 Perkogine.Rectangle.prototype = Object.create(Perkogine.Object.prototype);
 Perkogine.Rectangle.prototype.constructor = Perkogine.Rectangle;
+
+Perkogine.Rectangle.prototype.clone = function() {
+  return new this.constructor(this).copy(this);
+}
+Perkogine.Ellipse = function(properties) {
+  Perkogine.Object.call(this, arguments);
+  
+  this.width = properties.width || 0;
+  this.height = properties.height || 0;
+  this.color = properties.color || '#FFFFFF';
+  this.borderColor = properties.borderColor || '#FFFFFF';
+  this.borderWidth = properties.borderWidth || 0;
+}
+
+Perkogine.Ellipse.prototype = Object.create(Perkogine.Object.prototype);
+Perkogine.Ellipse.prototype.constructor = Perkogine.Ellipse;
+
+Perkogine.Ellipse.prototype.clone = function() {
+  return new this.constructor(this).copy(this);
+}
