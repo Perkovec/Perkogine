@@ -50,7 +50,7 @@ Perkogine.Renderer.prototype.Render = function(scene) {
   function DrawCircle(object) {
     ctx.beginPath();
     ctx.arc(object.position.x, object.position.y, object.radius * object.scale, 0, Math.PI * 2, false);
-    ctx.fillStyle = object.color;
+    ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
     ctx.fill();
     ctx.strokeStyle = object.borderColor;
     ctx.strokeWidth = object.strokeWidth;
@@ -64,7 +64,7 @@ Perkogine.Renderer.prototype.Render = function(scene) {
                   object.position.y);
     ctx.rotate(Perkogine.Deg2Rad * object.rotation);
     ctx.rect(-object.width / 2, -object.height / 2, object.width, object.height);
-    ctx.fillStyle = object.color;
+    ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
     ctx.fill();
     ctx.strokeStyle = object.borderColor;
     ctx.strokeWidth = object.strokeWidth;
@@ -81,7 +81,7 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.scale(object.width / object.height, 1);
     
     ctx.arc(0, 0, object.height / 2, 0, Math.PI * 2, false);
-    ctx.fillStyle = object.color;
+    ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
     ctx.fill();
     ctx.strokeStyle = object.borderColor;
     ctx.strokeWidth = object.strokeWidth;

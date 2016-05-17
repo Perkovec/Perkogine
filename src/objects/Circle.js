@@ -5,6 +5,7 @@ Perkogine.Circle = function(properties) {
   this.color = properties.color || '#FFFFFF';
   this.borderColor = properties.borderColor || '#FFFFFF';
   this.borderWidth = properties.borderWidth || 0;
+  this.texture = properties.texture || null;
 }
 
 Perkogine.Circle.prototype = Object.create(Perkogine.Object.prototype);
