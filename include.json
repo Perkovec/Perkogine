@@ -6,5 +6,7 @@
   "src/objects/Object.js",
   "src/objects/Circle.js",
   "src/objects/Rectangle.js",
-  "src/objects/Ellipse.js"
+  "src/objects/Ellipse.js",
+  "src/managers/CountManager.js",
+  "src/managers/AssetsManager.js"
 ]

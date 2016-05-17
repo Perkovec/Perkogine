@@ -95,7 +95,7 @@ Perkogine.Renderer.prototype.Render = function(scene) {
   function DrawCircle(object) {
     ctx.beginPath();
     ctx.arc(object.position.x, object.position.y, object.radius * object.scale, 0, Math.PI * 2, false);
-    ctx.fillStyle = object.color;
+    ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
     ctx.fill();
     ctx.strokeStyle = object.borderColor;
     ctx.strokeWidth = object.strokeWidth;
@@ -109,7 +109,7 @@ Perkogine.Renderer.prototype.Render = function(scene) {
                   object.position.y);
     ctx.rotate(Perkogine.Deg2Rad * object.rotation);
     ctx.rect(-object.width / 2, -object.height / 2, object.width, object.height);
-    ctx.fillStyle = object.color;
+    ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
     ctx.fill();
     ctx.strokeStyle = object.borderColor;
     ctx.strokeWidth = object.strokeWidth;
@@ -126,7 +126,7 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.scale(object.width / object.height, 1);
     
     ctx.arc(0, 0, object.height / 2, 0, Math.PI * 2, false);
-    ctx.fillStyle = object.color;
+    ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
     ctx.fill();
     ctx.strokeStyle = object.borderColor;
     ctx.strokeWidth = object.strokeWidth;
@@ -181,6 +181,7 @@ Perkogine.Circle = function(properties) {
   this.color = properties.color || '#FFFFFF';
   this.borderColor = properties.borderColor || '#FFFFFF';
   this.borderWidth = properties.borderWidth || 0;
+  this.texture = properties.texture || null;
 }
 
 Perkogine.Circle.prototype = Object.create(Perkogine.Object.prototype);
@@ -197,6 +198,7 @@ Perkogine.Rectangle = function(properties) {
   this.color = properties.color || '#FFFFFF';
   this.borderColor = properties.borderColor || '#FFFFFF';
   this.borderWidth = properties.borderWidth || 0;
+  this.texture = properties.texture || null;
 }
 
 Perkogine.Rectangle.prototype = Object.create(Perkogine.Object.prototype);
@@ -213,6 +215,7 @@ Perkogine.Ellipse = function(properties) {
   this.color = properties.color || '#FFFFFF';
   this.borderColor = properties.borderColor || '#FFFFFF';
   this.borderWidth = properties.borderWidth || 0;
+  this.texture = properties.texture || null;
 }
 
 Perkogine.Ellipse.prototype = Object.create(Perkogine.Object.prototype);
@@ -220,4 +223,39 @@ Perkogine.Ellipse.prototype.constructor = Perkogine.Ellipse;
 
 Perkogine.Ellipse.prototype.clone = function() {
   return new this.constructor(this).copy(this);
+}
+Perkogine.CountManager = function(count, callback) {
+  this.count = count;
+  this.callback = callback;
+  this.current = 0;
+}
+
+Perkogine.CountManager.prototype.tick = function() {
+  this.current++;
+  if (this.current >= this.count){
+    this.callback();
+  }
+}
+Perkogine.AssetsManager = function() {
+  this.assets = {};
+}
+
+Perkogine.AssetsManager.prototype.loadImages = function(links, callback) {
+  if (!links.length){
+    return;
+  }
+  
+  var loadManager = new Perkogine.CountManager(links.length, callback);
+  
+  for (var i = 0; i < links.length; ++i){
+    (function(manager, link) {
+      var scope = this;
+      var image = new Image();
+      image.onload = function() {
+        scope.assets[link.name] = image;
+        loadManager.tick();
+      }
+      image.src = link.source;
+    }).bind(this)(loadManager, links[i]);
+  }
 }
