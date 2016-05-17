@@ -19,3 +19,9 @@ Perkogine.Object.prototype.rotate = function(angle) {
   
   return this;
 }
+
+Perkogine.Object.prototype.rotateAround = function(origin, angle) {
+  this.position.rotateAround(origin, angle);
+  
+  return this;
+}

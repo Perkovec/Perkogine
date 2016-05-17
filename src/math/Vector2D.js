@@ -9,3 +9,15 @@ Perkogine.Vector2D.prototype.set = function(x, y) {
   
   return this;
 }
+
+Perkogine.Vector2D.prototype.clone = function() {
+  return new this.constructor(this.x, this.y);
+}
+
+Perkogine.Vector2D.prototype.rotateAround = function(origin, angle){
+  angle = Perkogine.Deg2Rad * angle;
+  var point = this.clone();
+  
+  this.x = Math.cos(angle) * (point.x - origin.x) - Math.sin(angle) * (point.y - origin.y) + origin.x;
+  this.y = Math.cos(angle) * (point.y - origin.y) + Math.sin(angle) * (point.x - origin.x) + origin.y;
+}
