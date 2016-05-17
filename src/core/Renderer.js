@@ -40,6 +40,8 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     
     if (object instanceof Perkogine.Circle) {
       DrawCircle(object);
+    } else if (object instanceof Perkogine.Rectangle) {
+      DrawRectangle(object);
     }
   }
   
@@ -51,5 +53,20 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.strokeStyle = object.borderColor;
     ctx.strokeWidth = object.strokeWidth;
     ctx.stroke();
+  }
+  
+  function DrawRectangle(object) {
+    ctx.beginPath();
+    ctx.save();
+    ctx.translate(object.position.x, 
+                  object.position.y);
+    ctx.rotate(Perkogine.Deg2Rad * object.rotation);
+    ctx.rect(-object.width / 2, -object.height / 2, object.width, object.height);
+    ctx.fillStyle = object.color;
+    ctx.fill();
+    ctx.strokeStyle = object.borderColor;
+    ctx.strokeWidth = object.strokeWidth;
+    ctx.stroke();
+    ctx.restore();
   }
 }
