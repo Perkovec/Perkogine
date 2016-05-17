@@ -15,8 +15,12 @@ Perkogine.Renderer = function(properties) {
   this._ctx = ctx;
 }
 
+Perkogine.Renderer.prototype.clear = function() {
+  this._ctx.clearRect(0, 0, this.width, this.height);
+}
+
 Perkogine.Renderer.prototype.Render = function(scene) {
-  var scope = this;
+  var ctx = this._ctx;
   
   var objects = scene.objects.filter(function(object) {
     return object.visible;
@@ -40,12 +44,12 @@ Perkogine.Renderer.prototype.Render = function(scene) {
   }
   
   function DrawCircle(object) {
-    var ctx = scope._ctx;
-    
     ctx.beginPath();
-    ctx.arc(object.position.x, object.position.y, object.radius, 0, Math.PI * 2, false);
+    ctx.arc(object.position.x, object.position.y, object.radius * object.scale, 0, Math.PI * 2, false);
     ctx.fillStyle = object.color;
     ctx.fill();
+    ctx.strokeStyle = object.borderColor;
+    ctx.strokeWidth = object.strokeWidth;
     ctx.stroke();
   }
 }
