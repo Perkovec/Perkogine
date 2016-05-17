@@ -1,0 +1,8 @@
+[
+  "src/perkogine.js",
+  "src/math/Vector2D.js",
+  "src/core/Scene.js", 
+  "src/core/Renderer.js",
+  "src/objects/Object.js",
+  "src/objects/Circle.js"
+]

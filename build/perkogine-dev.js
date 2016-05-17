@@ -1,6 +1,17 @@
 var Perkogine = {
     version: '1.0β'
 };
+Perkogine.Vector2D = function(x, y) {
+  this.x = x || 0;
+  this.y = y || 0;
+}
+Perkogine.Scene = function() {
+  this.objects = [];
+}
+
+Perkogine.Scene.prototype.Add = function(object) {
+  this.objects.push(object);
+}
 Perkogine.Renderer = function(properties) {
   properties = properties || {};
   this.parent = properties.parent || document.body;
@@ -52,20 +63,22 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.stroke();
   }
 }
-Perkogine.Scene = function() {
-  this.objects = [];
-}
-
-Perkogine.Scene.prototype.Add = function(object) {
-  this.objects.push(object);
-}
-Perkogine.Vector2D = function(x, y) {
-  this.x = x || 0;
-  this.y = y || 0;
-}
-Perkogine.Circle = function (properties){
-  this.radius = properties.radius || 0;
-  this.color = properties.color || '#FFFFFF';
+Perkogine.Object = function(properties) {
   this.visible = properties.visible || true;
   this.position = properties.position || new Perkogine.Vector2D();
 }
+
+Perkogine.Object.prototype.constructor = Perkogine.Object;
+
+Perkogine.Object.prototype.translateX = function(x) {
+  this.position.x += x;
+}
+Perkogine.Circle = function(properties) {
+  Perkogine.Object.call(this, arguments);
+  
+  this.radius = properties.radius || 0;
+  this.color = properties.color || '#FFFFFF';
+}
+
+Perkogine.Circle.prototype = Object.create(Perkogine.Object.prototype);
+Perkogine.Circle.prototype.constructor = Perkogine.Circle;

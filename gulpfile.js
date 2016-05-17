@@ -3,8 +3,10 @@ var uglify = require('gulp-uglify');
 var eslint = require('gulp-eslint');
 var concat = require('gulp-concat');
 
+var include = require('./include.json');
+
 gulp.task('build-release', function (){
-	gulp.src('src/**')
+	gulp.src(include)
 			.pipe(eslint())
 			.pipe(eslint.format())
 			.pipe(eslint.failAfterError())
@@ -14,7 +16,7 @@ gulp.task('build-release', function (){
 });
 
 gulp.task('build-dev', function (){
-	gulp.src('src/**')
+	gulp.src(include)
 			.pipe(eslint())
 			.pipe(eslint.format())
 			.pipe(eslint.failAfterError())
