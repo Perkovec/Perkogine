@@ -1,9 +1,31 @@
 var Perkogine = {
     version: '1.0β'
 };
+
+Perkogine.Deg2Rad = Math.PI / 180;
+Perkogine.Rag2Deg = 180 / Math.PI;
 Perkogine.Vector2D = function(x, y) {
   this.x = x || 0;
   this.y = y || 0;
+}
+
+Perkogine.Vector2D.prototype.set = function(x, y) {
+  this.x = x;
+  this.y = y;
+  
+  return this;
+}
+
+Perkogine.Vector2D.prototype.clone = function() {
+  return new this.constructor(this.x, this.y);
+}
+
+Perkogine.Vector2D.prototype.rotateAround = function(origin, angle){
+  angle = Perkogine.Deg2Rad * angle;
+  var point = this.clone();
+  
+  this.x = Math.cos(angle) * (point.x - origin.x) - Math.sin(angle) * (point.y - origin.y) + origin.x;
+  this.y = Math.cos(angle) * (point.y - origin.y) + Math.sin(angle) * (point.x - origin.x) + origin.y;
 }
 Perkogine.Scene = function() {
   this.objects = [];
@@ -29,8 +51,12 @@ Perkogine.Renderer = function(properties) {
   this._ctx = ctx;
 }
 
+Perkogine.Renderer.prototype.clear = function() {
+  this._ctx.clearRect(0, 0, this.width, this.height);
+}
+
 Perkogine.Renderer.prototype.Render = function(scene) {
-  var scope = this;
+  var ctx = this._ctx;
   
   var objects = scene.objects.filter(function(object) {
     return object.visible;
@@ -50,35 +76,83 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     
     if (object instanceof Perkogine.Circle) {
       DrawCircle(object);
+    } else if (object instanceof Perkogine.Rectangle) {
+      DrawRectangle(object);
     }
   }
   
   function DrawCircle(object) {
-    var ctx = scope._ctx;
-    
     ctx.beginPath();
-    ctx.arc(object.position.x, object.position.y, object.radius, 0, Math.PI * 2, false);
+    ctx.arc(object.position.x, object.position.y, object.radius * object.scale, 0, Math.PI * 2, false);
     ctx.fillStyle = object.color;
     ctx.fill();
+    ctx.strokeStyle = object.borderColor;
+    ctx.strokeWidth = object.strokeWidth;
     ctx.stroke();
+  }
+  
+  function DrawRectangle(object) {
+    ctx.beginPath();
+    ctx.save();
+    ctx.translate(object.position.x, 
+                  object.position.y);
+    ctx.rotate(Perkogine.Deg2Rad * object.rotation);
+    ctx.rect(-object.width / 2, -object.height / 2, object.width, object.height);
+    ctx.fillStyle = object.color;
+    ctx.fill();
+    ctx.strokeStyle = object.borderColor;
+    ctx.strokeWidth = object.strokeWidth;
+    ctx.stroke();
+    ctx.restore();
   }
 }
 Perkogine.Object = function(properties) {
   this.visible = properties.visible || true;
   this.position = properties.position || new Perkogine.Vector2D();
+  this.rotation = properties.rotation || 0;
+  this.scale = properties.scale || 1;
 }
 
 Perkogine.Object.prototype.constructor = Perkogine.Object;
 
-Perkogine.Object.prototype.translateX = function(x) {
-  this.position.x += x;
+Perkogine.Object.prototype.translate = function(distance) {
+  this.position.x += Math.cos(Perkogine.Deg2Rad * this.rotation) * distance;
+  this.position.y += Math.sin(Perkogine.Deg2Rad * this.rotation) * distance;
+  
+  return this;
+}
+
+Perkogine.Object.prototype.rotate = function(angle) {
+  this.rotation += angle;
+  
+  return this;
+}
+
+Perkogine.Object.prototype.rotateAround = function(origin, angle) {
+  this.position.rotateAround(origin, angle);
+  
+  return this;
 }
 Perkogine.Circle = function(properties) {
   Perkogine.Object.call(this, arguments);
   
   this.radius = properties.radius || 0;
   this.color = properties.color || '#FFFFFF';
+  this.borderColor = properties.borderColor || '#FFFFFF';
+  this.borderWidth = properties.borderWidth || 0;
 }
 
 Perkogine.Circle.prototype = Object.create(Perkogine.Object.prototype);
 Perkogine.Circle.prototype.constructor = Perkogine.Circle;
+Perkogine.Rectangle = function(properties) {
+  Perkogine.Object.call(this, arguments);
+  
+  this.width = properties.width || 0;
+  this.height = properties.height || 0;
+  this.color = properties.color || '#FFFFFF';
+  this.borderColor = properties.borderColor || '#FFFFFF';
+  this.borderWidth = properties.borderWidth || 0;
+}
+
+Perkogine.Rectangle.prototype = Object.create(Perkogine.Object.prototype);
+Perkogine.Rectangle.prototype.constructor = Perkogine.Rectangle;

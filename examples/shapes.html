@@ -16,12 +16,31 @@
         radius: 50,
         color: 'green'
       })
+      circle.position.set(250, 130);
       
-      circle.position = new Perkogine.Vector2D(250, 250);
+      var rectangle = new Perkogine.Rectangle({
+        width: 100,
+        height: 100,
+        color: 'black'
+      });
+      rectangle.position.set(250, 250);
       
       scene.Add(circle);
+      scene.Add(rectangle);
       
-      renderer.Render(scene);
+      var centerPoint = new Perkogine.Vector2D(renderer.width / 2, renderer.height / 2);
+      
+      function update() {
+        requestAnimationFrame(update);
+        
+        circle.rotateAround(centerPoint, 3);
+              
+        rectangle.rotate(-5);
+              
+        renderer.clear();
+        renderer.Render(scene);
+      }
+      requestAnimationFrame(update);
     </script>
   </body>
 </html>
