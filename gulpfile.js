@@ -8,8 +8,8 @@ gulp.task('build-release', function (){
 			.pipe(eslint())
 			.pipe(eslint.format())
 			.pipe(eslint.failAfterError())
-			.pipe(uglify())
 			.pipe(concat('perkogine.js'))
+			.pipe(uglify())
 			.pipe(gulp.dest('build'));
 });
 
