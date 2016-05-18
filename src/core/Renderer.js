@@ -44,6 +44,8 @@ Perkogine.Renderer.prototype.Render = function(scene) {
       DrawRectangle(object);
     } else if (object instanceof Perkogine.Ellipse) {
       DrawEllipse(object);
+    } else if (object instanceof Perkogine.PathShape) {
+      DrawPathShape(object);
     }
   }
   
@@ -87,5 +89,23 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.strokeWidth = object.strokeWidth;
     ctx.stroke();
     ctx.restore();
+  }
+  
+  function DrawPathShape(object) {
+    var points = object.points;
+    if (!points.length)
+      return;
+      
+    ctx.beginPath();
+    ctx.moveTo(object.position.x + points[0].x, object.position.y + points[0].y);
+    for (var i = 1; i < points.length; ++i) {
+      ctx.lineTo(object.position.x + points[i].x, object.position.y + points[i].y);
+    }
+    ctx.lineTo(object.position.x + points[0].x, object.position.y + points[0].y);
+    ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
+    ctx.fill();
+    ctx.strokeStyle = object.borderColor;
+    ctx.strokeWidth = object.strokeWidth;
+    ctx.stroke();
   }
 }
