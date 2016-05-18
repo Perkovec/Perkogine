@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Perkogine - Textured shapes</title>
+    <meta charset="UTF-8"/>
+  </head>
+  <body>
+    <script src="../build/perkogine-dev.js"></script>
+    
+    <script>
+      init();
+      
+      function init() {
+        var renderer = new Perkogine.Renderer();
+        
+        var scene = new Perkogine.Scene();
+        
+        var pointCount = 20;
+        var radius = 100;
+        var points = [];
+        var thetas = [];
+        var angle;
+        
+        for (var i = 0; i < pointCount; ++i) {
+          angle = 360 / pointCount * i * Perkogine.Deg2Rad;
+          points.push(new Perkogine.Vector2D(
+            Math.cos(angle) * radius,
+            Math.sin(angle) * radius
+          ));
+          thetas.push({
+            theta: getRandom(0, 5),
+            delta: getRandom(0.1, 0.2)
+          });
+        }
+        
+        var shape = new Perkogine.PathShape({
+          points: points,
+          color: 'orange',
+          borderColor: 'black',
+          borderWidth: 10
+        })
+        shape.position.set(250, 250);
+      
+        scene.Add(shape);
+        
+        var theta = 0;
+        function render() {
+          requestAnimationFrame(render);
+          
+          for(var i = 0; i < shape.points.length; ++i) {
+            angle = 360 / pointCount * i * Perkogine.Deg2Rad;
+            var newRadius = (radius + (2 * Math.sin(1 * thetas[i].theta)));
+            shape.points[i].set(
+              Math.cos(angle) * newRadius,
+              Math.sin(angle) * newRadius
+            );
+            thetas[i].theta += thetas[i].delta;
+          }
+          renderer.clear();
+          renderer.Render(scene);
+        }
+        render();
+        
+        function getRandom(min, max) {
+          return Math.random() * (max - min) + min;
+        }
+      }
+    </script>
+  </body>
+</html>

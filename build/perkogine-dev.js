@@ -89,6 +89,8 @@ Perkogine.Renderer.prototype.Render = function(scene) {
       DrawRectangle(object);
     } else if (object instanceof Perkogine.Ellipse) {
       DrawEllipse(object);
+    } else if (object instanceof Perkogine.PathShape) {
+      DrawPathShape(object);
     }
   }
   
@@ -133,6 +135,24 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.stroke();
     ctx.restore();
   }
+  
+  function DrawPathShape(object) {
+    var points = object.points;
+    if (!points.length)
+      return;
+      
+    ctx.beginPath();
+    ctx.moveTo(object.position.x + points[0].x, object.position.y + points[0].y);
+    for (var i = 1; i < points.length; ++i) {
+      ctx.lineTo(object.position.x + points[i].x, object.position.y + points[i].y);
+    }
+    ctx.lineTo(object.position.x + points[0].x, object.position.y + points[0].y);
+    ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
+    ctx.fill();
+    ctx.strokeStyle = object.borderColor;
+    ctx.strokeWidth = object.strokeWidth;
+    ctx.stroke();
+  }
 }
 Perkogine.Object = function(properties) {
   this.visible = properties.visible || true;
@@ -174,6 +194,22 @@ Perkogine.Object.prototype.copy = function(original) {
 Perkogine.Object.prototype.clone = function() {
   return new this.constructor().copy(this);
 };
+Perkogine.PathShape = function(properties) {
+  Perkogine.Object.call(this, arguments);
+  
+  this.points = properties.points || [];
+  this.color = properties.color || '#FFFFFF';
+  this.borderColor = properties.borderColor || '#FFFFFF';
+  this.borderWidth = properties.borderWidth || 0;
+  this.texture = properties.texture || null;
+}
+
+Perkogine.PathShape.prototype = Object.create(Perkogine.Object.prototype);
+Perkogine.PathShape.prototype.constructor = Perkogine.PathShape;
+
+Perkogine.PathShape.prototype.clone = function() {
+  return new this.constructor(this).copy(this);
+}
 Perkogine.Circle = function(properties) {
   Perkogine.Object.call(this, arguments);
   

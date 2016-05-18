@@ -4,6 +4,7 @@
   "src/core/Scene.js", 
   "src/core/Renderer.js",
   "src/objects/Object.js",
+  "src/objects/PathShape.js",
   "src/objects/Circle.js",
   "src/objects/Rectangle.js",
   "src/objects/Ellipse.js",
