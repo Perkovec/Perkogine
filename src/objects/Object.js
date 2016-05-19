@@ -21,7 +21,11 @@ Perkogine.Object.prototype.rotate = function(angle) {
 }
 
 Perkogine.Object.prototype.rotateAround = function(origin, angle) {
-  this.position.rotateAround(origin, angle);
+  angle = Perkogine.Deg2Rad * angle;
+  var point = this.position.clone();
+  
+  this.position.x = Math.cos(angle) * (point.x - origin.x) - Math.sin(angle) * (point.y - origin.y) + origin.x;
+  this.position.y = Math.cos(angle) * (point.y - origin.y) + Math.sin(angle) * (point.x - origin.x) + origin.y;
   
   return this;
 }
