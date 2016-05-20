@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Perkogine - ping pong</title>
+    <meta charset="UTF-8"/>
+  </head>
+  <body>
+    <script src="../../build/perkogine-dev.js"></script>
+    
+    <script>
+      var renderer = new Perkogine.Renderer({
+        clearColor: 'black',
+        width: 800,
+        height: 500
+      });
+      renderer.enableLockPointer(function() {
+        renderer.domElement.addEventListener('mousemove', captureMouse, false);
+      }, function() {
+        renderer.domElement.removeEventListener('mousemove', captureMouse, false);
+      });
+      
+      var keyboard = new Perkogine.Keyboard(window);
+      
+      var halfW = renderer.width / 2;
+      var halfH = renderer.height / 2;
+      
+      var scene = new Perkogine.Scene();
+      
+      var racketOpt = {
+        width: 15,
+        height: 80
+      };
+      
+      var scoreOpt = {
+        text: "0",
+        fontSize: 50
+      };
+      
+      var score = {
+        bot: 0,
+        player: 0
+      };
+      
+      var dirs = [-1, 1];
+      
+      var ball = new Perkogine.Circle({
+        radius: 10
+      });
+      
+      var player = new Perkogine.Rectangle(racketOpt);
+      var bot = new Perkogine.Rectangle(racketOpt);
+      
+      var playerScore = new Perkogine.Text(scoreOpt);
+      var botScore = new Perkogine.Text(scoreOpt);
+      
+      var divider = new Perkogine.Rectangle({
+        width: 6,
+        height: 60
+      });
+      
+      ball.position.set(halfW, halfH);
+      player.position.set(20, halfH);
+      bot.position.set(renderer.width - 20, halfH);
+      
+      playerScore.position.set(halfW - 40, 50);
+      botScore.position.set(halfW + 10, 50);
+      
+      divider.position.set(halfW, divider.height / 2);
+      
+      scene.Add(ball);
+      scene.Add(player);
+      scene.Add(bot);
+      
+      scene.Add(playerScore);
+      scene.Add(botScore);
+      
+      scene.Add(divider);
+      
+      var mouseY = halfH;
+      
+      function captureMouse(event){
+        var movementY = event.movementY || 0;
+        
+        player.position.y += movementY;
+        
+        player.position.y = player.position.y.clamp(player.height / 2, renderer.height - player.height / 2);
+      }
+      
+      function resetGame(){
+        gameStarted = false;
+        ball.position.set(halfW, halfH);
+      }
+      
+      var botSpeed = 2;
+      
+      var moveVector;
+      var gameStarted = false;
+      function update(event) {
+        requestAnimationFrame(update);
+        
+        if (keyboard.keys[Perkogine.Keys.Space] && !gameStarted && renderer.pointerLocked){
+          gameStarted = true;
+          var randomAngle = getRandom(120, 240);
+          moveVector = new Perkogine.Vector2D(Math.cos(randomAngle * Perkogine.Deg2Rad), 
+                                              Math.sin(randomAngle * Perkogine.Deg2Rad));
+          moveVector.multiplyScalar(2 * dirs[getRandomInt(0,1)]);
+        }
+        
+        if (gameStarted){
+          ball.position.add(moveVector);
+          
+          var baBou = ball.bounds;
+          var bBou = bot.bounds;
+          var pBou  = player.bounds;
+          var bPos = ball.position;
+          if ((baBou.left <= pBou.right && bPos.y < pBou.bottom && bPos.y > pBou.top) ||
+              (baBou.right >= bBou.left && bPos.y < bBou.bottom && bPos.y > bBou.top)){
+            moveVector.x = -moveVector.x;
+            if (moveVector.length() < 15 ){
+              moveVector.multiplyScalar(1.2);
+            }
+          }
+          
+          if ((ball.bounds.top <= 0) ||
+              (ball.bounds.bottom >= renderer.height)){
+            moveVector.y = -moveVector.y;
+          }
+          
+          if (ball.bounds.right < 0){
+            score.bot++;
+            botScore.text = score.bot+"";
+            resetGame();
+          } else if (ball.bounds.left > renderer.width){
+            score.player++;
+            playerScore.text = score.player+"";
+            resetGame();
+          }
+          
+          if (ball.position.y > bot.bounds.bottom - 10){
+            bot.position.y += botSpeed;
+          } else if (ball.position.y < bot.bounds.top + 10){
+            bot.position.y -= botSpeed;
+          }
+          
+          bot.position.y = bot.position.y.clamp(bot.height / 2, renderer.height - bot.height / 2);
+        }
+        
+        renderer.clear();
+        renderer.Render(scene);
+      }
+      requestAnimationFrame(update);
+      
+      function getRandom(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+      
+      function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1) + min);
+      }
+      
+      Number.prototype.clamp = function(min, max) {
+        return Math.max(min, Math.min(max, this));
+      }
+    </script>
+  </body>
+</html>
