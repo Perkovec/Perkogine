@@ -3,6 +3,9 @@ Perkogine.Object = function(properties) {
   this.position = properties.position || new Perkogine.Vector2D();
   this.rotation = properties.rotation || 0;
   this.scale = properties.scale || 1;
+  this.width = properties.width || 0;
+  this.height = properties.height || 0;
+  this.bounds = properties.bounds || {};
 }
 
 Perkogine.Object.prototype.constructor = Perkogine.Object;
