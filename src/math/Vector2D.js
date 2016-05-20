@@ -102,3 +102,25 @@ Perkogine.Vector2D.prototype.divideScalar = function(scalar) {
 
   return this;
 }
+
+Perkogine.Vector2D.prototype.clamp = function(min, max) {
+  this.x = Math.max(min.x, Math.min(max.x, this.x));
+  this.y = Math.max(min.y, Math.min(max.y, this.y));
+  
+  return this;
+}
+
+Perkogine.Vector2D.prototype.negate = function() {
+  this.x = -this.x;
+  this.y = -this.y;
+  
+  return this;
+}
+
+Perkogine.Vector2D.prototype.length = function() {
+  return this.x * this.x + this.y * this.y;  
+}
+
+Perkogine.Vector2D.prototype.setLength = function(length) {
+  return this.multiplyScalar(length / this.length());
+}
