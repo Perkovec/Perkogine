@@ -3,6 +3,7 @@ Perkogine.Renderer = function(properties) {
   this.parent = properties.parent || document.body;
   this.width = properties.width || 500;
   this.height = properties.height || 500;
+  this.clearColor = properties.clearColor || "#FFFFFF";
   
   var domElement = document.createElement('canvas');
   domElement.width = this.width;
@@ -13,10 +14,35 @@ Perkogine.Renderer = function(properties) {
   
   this.domElement = domElement;
   this._ctx = ctx;
+  
+  this.pointerLocked = false;
 }
 
 Perkogine.Renderer.prototype.clear = function() {
-  this._ctx.clearRect(0, 0, this.width, this.height);
+  this._ctx.fillStyle = this.clearColor; 
+  this._ctx.fillRect(0, 0, this.width, this.height);
+}
+
+Perkogine.Renderer.prototype.enableLockPointer = function(onlock, onunlock) {
+  var canvas = this.domElement;
+         
+  canvas.onclick = function() {
+    canvas.requestPointerLock();
+  }
+  
+  if (document.onpointerlockchange !== undefined) {
+    document.addEventListener('pointerlockchange', pointerlockchange.bind(this), false);
+  }
+  
+  function pointerlockchange(){
+    if(document.pointerLockElement === canvas) {
+      this.pointerLocked = true;
+      onlock();
+    } else {     
+      this.pointerLocked = false;
+      onunlock();
+    }
+  }
 }
 
 Perkogine.Renderer.prototype.Render = function(scene) {
@@ -46,6 +72,8 @@ Perkogine.Renderer.prototype.Render = function(scene) {
       DrawEllipse(object);
     } else if (object instanceof Perkogine.PathShape) {
       DrawPathShape(object);
+    } else if (object instanceof Perkogine.Text) {
+      DrawText(object);
     }
   }
   
@@ -107,5 +135,14 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.strokeStyle = object.borderColor;
     ctx.strokeWidth = object.strokeWidth;
     ctx.stroke();
+  }
+  
+  function DrawText(object){
+    ctx.beginPath();
+    ctx.font = object.fontSize + "px " + object.font;
+    ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
+    ctx.strokeStyle = object.borderColor;
+    ctx.strokeWidth = object.strokeWidth;
+    ctx.fillText(object.text, object.position.x, object.position.y);
   }
 }
