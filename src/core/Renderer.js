@@ -83,7 +83,7 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
     ctx.fill();
     ctx.strokeStyle = object.borderColor;
-    ctx.strokeWidth = object.strokeWidth;
+    ctx.strokeWidth = object.borderWidth;
     ctx.stroke();
   }
   
@@ -97,7 +97,7 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
     ctx.fill();
     ctx.strokeStyle = object.borderColor;
-    ctx.strokeWidth = object.strokeWidth;
+    ctx.strokeWidth = object.borderWidth;
     ctx.stroke();
     ctx.restore();
   }
@@ -114,7 +114,7 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
     ctx.fill();
     ctx.strokeStyle = object.borderColor;
-    ctx.strokeWidth = object.strokeWidth;
+    ctx.strokeWidth = object.borderWidth;
     ctx.stroke();
     ctx.restore();
   }
@@ -133,7 +133,7 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
     ctx.fill();
     ctx.strokeStyle = object.borderColor;
-    ctx.strokeWidth = object.strokeWidth;
+    ctx.lineWidth = object.borderWidth;
     ctx.stroke();
   }
   
@@ -142,7 +142,7 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.font = object.fontSize + "px " + object.font;
     ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
     ctx.strokeStyle = object.borderColor;
-    ctx.strokeWidth = object.strokeWidth;
+    ctx.strokeWidth = object.borderWidth;
     ctx.fillText(object.text, object.position.x, object.position.y);
   }
 }
