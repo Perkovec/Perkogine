@@ -75,8 +75,12 @@ Perkogine.Vector2D.prototype.multiply = function(vector) {
 }
 
 Perkogine.Vector2D.prototype.multiplyScalar = function(scalar) {
-  this.x *= scalar;
-  this.y *= scalar;
+  if (isFinite(scalar)) {
+    this.x *= scalar;
+    this.y *= scalar;
+  } else {
+    this.set(0, 0);
+  }
 
   return this;
 }
@@ -116,6 +120,13 @@ Perkogine.Vector2D.prototype.clamp = function(min, max) {
   return this;
 }
 
+Perkogine.Vector2D.prototype.clampScalar = function(min, max) {
+  this.x = Math.max(min, Math.min(max, this.x));
+  this.y = Math.max(min, Math.min(max, this.y));
+  
+  return this;
+}
+
 Perkogine.Vector2D.prototype.negate = function() {
   this.x = -this.x;
   this.y = -this.y;
@@ -130,12 +141,63 @@ Perkogine.Vector2D.prototype.length = function() {
 Perkogine.Vector2D.prototype.setLength = function(length) {
   return this.multiplyScalar(length / this.length());
 }
+
+Perkogine.Vector2D.prototype.clampLength = function(min, max) {
+  var length = this.length();
+  return this.multiplyScalar(Math.max(min, Math.min(max, length)) / length);
+}
+
+Perkogine.Vector2D.prototype.clampXProp = function(min, max) {
+  var ratio = Math.max(min, Math.min(max, this.x)) / this.x;
+  this.multiplyScalar(ratio);
+  
+  return this;
+}
+      
+Perkogine.Vector2D.prototype.clampYProp = function(min, max) {
+  var ratio = Math.max(min, Math.min(max, this.y)) / this.y;
+  this.multiplyScalar(ratio);
+  
+  return this;
+}
+Perkogine.Math = {};
+Perkogine.Math.UUID = function (){
+  // http://www.broofa.com/Tools/Math.uuid.htm
+  var chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
+  var uuid = new Array(36);
+  var rnd = 0, r;
+
+  return function() {
+    for (var i = 0; i < 36; i ++) {
+				if (i === 8 || i === 13 || i === 18 || i === 23) {
+					uuid[i] = '-';
+				} else if (i === 14) {
+					uuid[i] = '4';
+				} else {
+					if (rnd <= 0x02) rnd = 0x2000000 + (Math.random() * 0x1000000) | 0;
+					r = rnd & 0xf;
+					rnd = rnd >> 4;
+					uuid[i] = chars[(i === 19)?(r & 0x3) | 0x8 : r];
+				}
+			}
+			return uuid.join('');
+		};
+}
 Perkogine.Scene = function() {
   this.objects = [];
 }
 
 Perkogine.Scene.prototype.Add = function(object) {
   this.objects.push(object);
+}
+
+Perkogine.Scene.prototype.Remove = function(object) {
+  for (var i = 0; i < this.objects.length; ++i) {
+    if (this.objects[i].UUID == object.UUID) {
+      this.objects.splice(i, 1);
+      break;
+    }
+  }
 }
 Perkogine.Renderer = function(properties) {
   properties = properties || {};
@@ -219,11 +281,7 @@ Perkogine.Renderer.prototype.Render = function(scene) {
   function DrawCircle(object) {
     ctx.beginPath();
     ctx.arc(object.position.x, object.position.y, object.radius * object.scale, 0, Math.PI * 2, false);
-    ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
-    ctx.fill();
-    ctx.strokeStyle = object.borderColor;
-    ctx.strokeWidth = object.strokeWidth;
-    ctx.stroke();
+    fillAndStroke(object);
   }
   
   function DrawRectangle(object) {
@@ -233,11 +291,7 @@ Perkogine.Renderer.prototype.Render = function(scene) {
                   object.position.y);
     ctx.rotate(Perkogine.Deg2Rad * object.rotation);
     ctx.rect(-object.width / 2, -object.height / 2, object.width, object.height);
-    ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
-    ctx.fill();
-    ctx.strokeStyle = object.borderColor;
-    ctx.strokeWidth = object.strokeWidth;
-    ctx.stroke();
+    fillAndStroke(object);
     ctx.restore();
   }
   
@@ -250,11 +304,7 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.scale(object.width / object.height, 1);
     
     ctx.arc(0, 0, object.height / 2, 0, Math.PI * 2, false);
-    ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
-    ctx.fill();
-    ctx.strokeStyle = object.borderColor;
-    ctx.strokeWidth = object.strokeWidth;
-    ctx.stroke();
+    fillAndStroke(object);
     ctx.restore();
   }
   
@@ -268,21 +318,25 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     for (var i = 1; i < points.length; ++i) {
       ctx.lineTo(object.position.x + points[i].x, object.position.y + points[i].y);
     }
-    ctx.lineTo(object.position.x + points[0].x, object.position.y + points[0].y);
-    ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
-    ctx.fill();
-    ctx.strokeStyle = object.borderColor;
-    ctx.strokeWidth = object.strokeWidth;
-    ctx.stroke();
+    ctx.closePath();
+    fillAndStroke(object);
   }
   
-  function DrawText(object){
+  function DrawText(object) {
     ctx.beginPath();
     ctx.font = object.fontSize + "px " + object.font;
     ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
     ctx.strokeStyle = object.borderColor;
-    ctx.strokeWidth = object.strokeWidth;
+    ctx.strokeWidth = object.borderWidth;
     ctx.fillText(object.text, object.position.x, object.position.y);
+  }
+  
+  function fillAndStroke(object) {
+    ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
+    ctx.fill();
+    ctx.strokeStyle = object.borderColor;
+    ctx.lineWidth = object.borderWidth;
+    if (object.borderWidth > 0) ctx.stroke();
   }
 }
 Perkogine.Object = function(properties) {
@@ -293,6 +347,8 @@ Perkogine.Object = function(properties) {
   this.width = properties.width || 0;
   this.height = properties.height || 0;
   this.bounds = properties.bounds || {};
+  this.layer = properties.layer !== undefined ? properties.layer : 0;
+  this.UUID = Perkogine.Math.UUID();
 }
 
 Perkogine.Object.prototype.constructor = Perkogine.Object;
@@ -333,13 +389,107 @@ Perkogine.Object.prototype.clone = function() {
   return new this.constructor().copy(this);
 };
 Perkogine.PathShape = function(properties) {
-  Perkogine.Object.call(this, arguments);
+  Perkogine.Object.call(this, properties);
   
-  this.points = properties.points || [];
   this.color = properties.color || '#FFFFFF';
   this.borderColor = properties.borderColor || '#FFFFFF';
   this.borderWidth = properties.borderWidth || 0;
   this.texture = properties.texture || null;
+  
+  var points = properties.points || [];
+  var position = this.position.clone();
+  var scope = this;
+  calculateParams();
+  Object.defineProperty(this, 'points', {
+    set: function(newPoints) {
+      points = newPoints;
+      calculateParams();
+    },
+    get: function() {
+      return points;
+    }
+  });
+  
+  Object.defineProperty(this.position, 'x', {
+    get: function() { return position.x; },
+    set: function(newX) {
+      position.x = newX;
+      calculateParams()
+    }
+  });
+  
+  Object.defineProperty(this.position, 'y', {
+    get: function() { return position.y; },
+    set: function(newY) {
+      position.y = newY;
+      calculateParams();
+    }
+  });
+  
+  Object.defineProperty(points, "push", {
+    configurable: false,
+    enumerable: false,
+    writable: false,
+    value: function () {
+      for (var i = 0, n = this.length, l = arguments.length; i < l; i++, n++) {          
+        points[n] = arguments[i];
+      }
+      calculateParams();
+      updateDefines();
+      return n;
+    }
+  });
+  
+  function updateDefines() {
+    for (var i = 0; i < points.length; ++i) {
+      Object.defineProperty(points[i], 'x', {
+        set: function(newX) {
+          this.__x = newX;
+          calculateParams();
+        },
+        get: function() {
+          return this.__x;
+        }
+      });
+      
+      Object.defineProperty(points[i], 'y', {
+        set: function(newY) {
+          this.__y = newY;
+          calculateParams();
+        },
+        get: function() {
+          return this.__y;
+        }
+      });
+    }
+  }
+  
+  function calculateParams() {
+    var width = 0;
+    var height = 0;
+    if (points.length){
+      var left = points[0].x;
+      var right = points[0].x;
+      var top = points[0].y;
+      var bottom = points[0].y;
+    }
+    for (var i = 0; i < points.length; ++i) {
+      if (points[i].x < left) left = points[i].x;
+      if (points[i].x > right) right = points[i].x;
+      if (points[i].y < top) top = points[i].y;
+      if (points[i].y > bottom) bottom = points[i].y;
+    }
+    width = right - left;
+    height = bottom - top;
+    scope.bounds = {
+      left: position.x + left,
+      right: position.x + right,
+      top: position.y + top,
+      bottom: position.y + bottom
+    };
+    scope.width = width;
+    scope.height = height;
+  }
 }
 
 Perkogine.PathShape.prototype = Object.create(Perkogine.Object.prototype);
@@ -468,12 +618,58 @@ Perkogine.Rectangle.prototype.clone = function() {
 Perkogine.Ellipse = function(properties) {
   Perkogine.Object.call(this, arguments);
   
-  this.width = properties.width || 0;
-  this.height = properties.height || 0;
   this.color = properties.color || '#FFFFFF';
   this.borderColor = properties.borderColor || '#FFFFFF';
   this.borderWidth = properties.borderWidth || 0;
   this.texture = properties.texture || null;
+  
+  var width = properties.width || 0;
+  var height = properties.height || 0;
+  var position = this.position.clone();
+  
+  var scope = this;
+  function updateBounds() {
+    scope.bounds = {
+      left: position.x - width / 2.0,
+      right: position.x + width / 2.0,
+      top: position.y - height / 2.0,
+      bottom: position.y + height / 2.0
+    };
+  }
+  
+  Object.defineProperty(this, 'width', {
+    get: function() { return width; },
+    set: function(newWidth) {
+      width = newWidth;
+      updateBounds();
+    }
+  });
+  
+  Object.defineProperty(this, 'height', {
+    get: function() { return height; },
+    set: function(newHeight) {
+      height = newHeight;
+      updateBounds();
+    }
+  });
+  this.width = width;
+  this.height = height;
+  
+  Object.defineProperty(this.position, 'x', {
+    get: function() { return position.x; },
+    set: function(newX) {
+      position.x = newX;
+      updateBounds()
+    }.bind(this)
+  });
+  
+  Object.defineProperty(this.position, 'y', {
+    get: function() { return position.y; },
+    set: function(newY) {
+      position.y = newY;
+      updateBounds()
+    }.bind(this)
+  });
 }
 
 Perkogine.Ellipse.prototype = Object.create(Perkogine.Object.prototype);

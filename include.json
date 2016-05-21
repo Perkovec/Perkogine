@@ -1,6 +1,7 @@
 [
   "src/perkogine.js",
   "src/math/Vector2D.js",
+  "src/math/Math.js",
   "src/core/Scene.js", 
   "src/core/Renderer.js",
   "src/objects/Object.js",
