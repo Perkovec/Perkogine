@@ -6,6 +6,8 @@ Perkogine.Object = function(properties) {
   this.width = properties.width || 0;
   this.height = properties.height || 0;
   this.bounds = properties.bounds || {};
+  this.layer = properties.layer !== undefined ? properties.layer : 0;
+  this.UUID = Perkogine.Math.UUID();
 }
 
 Perkogine.Object.prototype.constructor = Perkogine.Object;
