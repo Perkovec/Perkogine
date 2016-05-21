@@ -80,11 +80,7 @@ Perkogine.Renderer.prototype.Render = function(scene) {
   function DrawCircle(object) {
     ctx.beginPath();
     ctx.arc(object.position.x, object.position.y, object.radius * object.scale, 0, Math.PI * 2, false);
-    ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
-    ctx.fill();
-    ctx.strokeStyle = object.borderColor;
-    ctx.strokeWidth = object.borderWidth;
-    ctx.stroke();
+    fillAndStroke(object);
   }
   
   function DrawRectangle(object) {
@@ -94,11 +90,7 @@ Perkogine.Renderer.prototype.Render = function(scene) {
                   object.position.y);
     ctx.rotate(Perkogine.Deg2Rad * object.rotation);
     ctx.rect(-object.width / 2, -object.height / 2, object.width, object.height);
-    ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
-    ctx.fill();
-    ctx.strokeStyle = object.borderColor;
-    ctx.strokeWidth = object.borderWidth;
-    ctx.stroke();
+    fillAndStroke(object);
     ctx.restore();
   }
   
@@ -111,11 +103,7 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.scale(object.width / object.height, 1);
     
     ctx.arc(0, 0, object.height / 2, 0, Math.PI * 2, false);
-    ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
-    ctx.fill();
-    ctx.strokeStyle = object.borderColor;
-    ctx.strokeWidth = object.borderWidth;
-    ctx.stroke();
+    fillAndStroke(object);
     ctx.restore();
   }
   
@@ -129,20 +117,24 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     for (var i = 1; i < points.length; ++i) {
       ctx.lineTo(object.position.x + points[i].x, object.position.y + points[i].y);
     }
-    ctx.lineTo(object.position.x + points[0].x, object.position.y + points[0].y);
-    ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
-    ctx.fill();
-    ctx.strokeStyle = object.borderColor;
-    ctx.lineWidth = object.borderWidth;
-    ctx.stroke();
+    ctx.closePath();
+    fillAndStroke(object);
   }
   
-  function DrawText(object){
+  function DrawText(object) {
     ctx.beginPath();
     ctx.font = object.fontSize + "px " + object.font;
     ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
     ctx.strokeStyle = object.borderColor;
     ctx.strokeWidth = object.borderWidth;
     ctx.fillText(object.text, object.position.x, object.position.y);
+  }
+  
+  function fillAndStroke(object) {
+    ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
+    ctx.fill();
+    ctx.strokeStyle = object.borderColor;
+    ctx.lineWidth = object.borderWidth;
+    if (object.borderWidth > 0) ctx.stroke();
   }
 }
