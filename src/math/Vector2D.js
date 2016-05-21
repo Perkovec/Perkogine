@@ -69,8 +69,12 @@ Perkogine.Vector2D.prototype.multiply = function(vector) {
 }
 
 Perkogine.Vector2D.prototype.multiplyScalar = function(scalar) {
-  this.x *= scalar;
-  this.y *= scalar;
+  if (isFinite(scalar)) {
+    this.x *= scalar;
+    this.y *= scalar;
+  } else {
+    this.set(0, 0);
+  }
 
   return this;
 }
@@ -110,6 +114,13 @@ Perkogine.Vector2D.prototype.clamp = function(min, max) {
   return this;
 }
 
+Perkogine.Vector2D.prototype.clampScalar = function(min, max) {
+  this.x = Math.max(min, Math.min(max, this.x));
+  this.y = Math.max(min, Math.min(max, this.y));
+  
+  return this;
+}
+
 Perkogine.Vector2D.prototype.negate = function() {
   this.x = -this.x;
   this.y = -this.y;
@@ -123,4 +134,23 @@ Perkogine.Vector2D.prototype.length = function() {
 
 Perkogine.Vector2D.prototype.setLength = function(length) {
   return this.multiplyScalar(length / this.length());
+}
+
+Perkogine.Vector2D.prototype.clampLength = function(min, max) {
+  var length = this.length();
+  return this.multiplyScalar(Math.max(min, Math.min(max, length)) / length);
+}
+
+Perkogine.Vector2D.prototype.clampXProp = function(min, max) {
+  var ratio = Math.max(min, Math.min(max, this.x)) / this.x;
+  this.multiplyScalar(ratio);
+  
+  return this;
+}
+      
+Perkogine.Vector2D.prototype.clampYProp = function(min, max) {
+  var ratio = Math.max(min, Math.min(max, this.y)) / this.y;
+  this.multiplyScalar(ratio);
+  
+  return this;
 }
