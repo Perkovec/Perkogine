@@ -120,13 +120,6 @@ Perkogine.Vector2D.prototype.clamp = function(min, max) {
   return this;
 }
 
-Perkogine.Vector2D.prototype.clampScalar = function(min, max) {
-  this.x = Math.max(min, Math.min(max, this.x));
-  this.y = Math.max(min, Math.min(max, this.y));
-  
-  return this;
-}
-
 Perkogine.Vector2D.prototype.negate = function() {
   this.x = -this.x;
   this.y = -this.y;
@@ -328,7 +321,7 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
     ctx.strokeStyle = object.borderColor;
     ctx.strokeWidth = object.borderWidth;
-    ctx.fillText(object.text, object.position.x, object.position.y);
+    ctx.fillText(object.text, object.bounds.left, object.bounds.bottom);
   }
   
   function fillAndStroke(object) {
@@ -685,9 +678,81 @@ Perkogine.Text = function(properties) {
   this.borderColor = properties.borderColor || '#FFFFFF';
   this.borderWidth = properties.borderWidth || 0;
   this.texture = properties.texture || null;
-  this.font = properties.font || "Arial";
-  this.fontSize = properties.fontSize || 16;
-  this.text = properties.text || "";
+  
+  var scope = this;
+  
+  var text = "";
+  var fontSize = 16;
+  var font = "Arial";
+  var position = this.position.clone();
+  Object.defineProperty(this, 'text', {
+    get: function() {
+      return text;
+    },
+    set: function(newText) {
+      text = newText;
+      updateParams();
+    }
+  });
+  
+  Object.defineProperty(this, 'fontSize', {
+    get: function() {
+      return fontSize;
+    },
+    set: function(newFontSize) {
+      fontSize = newFontSize;
+      updateParams();
+    }
+  });
+  
+  Object.defineProperty(this, 'font', {
+    get: function() {
+      return font;
+    },
+    set: function(newFont) {
+      font = newFont;
+      updateParams();
+    }
+  });
+  
+  Object.defineProperty(this.position, 'x', {
+    get: function() {
+      return position.x;
+    },
+    set: function(newX) {
+      position.x = newX;
+      updateParams();
+    }
+  });
+  
+  Object.defineProperty(this.position, 'y', {
+    get: function() {
+      return position.y;
+    },
+    set: function(newY) {
+      position.y = newY;
+      updateParams();
+    }
+  });
+  
+  font = properties.font || "Arial";
+  fontSize = properties.fontSize || 16;
+  text = properties.text || "";
+  
+  function updateParams (){
+    var ctx = document.createElement('canvas').getContext('2d');
+    ctx.font = fontSize + "px " + font;
+    
+    scope.width = ctx.measureText(text).width;
+    scope.height = fontSize;
+    
+    scope.bounds = {
+      left: position.x - scope.width / 2.0,
+      right: position.x + scope.width / 2.0,
+      top: position.y - scope.height / 2.0,
+      bottom: position.y + scope.height / 2.0
+    };
+  }
 }
 
 Perkogine.Text.prototype = Object.create(Perkogine.Object.prototype);
@@ -739,16 +804,16 @@ Perkogine.Keyboard = function(target) {
   
   function keydown(event) {
     this.keys[event.keyCode || event.which] = true;
-		this.keys["shift"] = event.shiftKey;
-		this.keys["ctrl"] = event.ctrlKey;
-		this.keys["alt"] = event.altKey;
+		this.keys['shift'] = event.shiftKey;
+		this.keys['ctrl'] = event.ctrlKey;
+		this.keys['alt'] = event.altKey;
   }
   
   function keyup(event) {
     this.keys[event.keyCode || event.which] = false;
-		this.keys["shift"] = event.shiftKey;
-		this.keys["ctrl"] = event.ctrlKey;
-		this.keys["alt"] = event.altKey;
+		this.keys['shift'] = event.shiftKey;
+		this.keys['ctrl'] = event.ctrlKey;
+		this.keys['alt'] = event.altKey;
   }
 }
 

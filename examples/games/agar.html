@@ -33,6 +33,7 @@
       
       var pointCount = 50;
       var radius = 20;
+      var collRadius = 10;
       var points = [];
       var thetas = [];
       var angle;
@@ -87,14 +88,30 @@
       }
       requestAnimationFrame(update);
       
+      var wall = 10;
       function updatePlayer() {
         for(var i = 0; i < player.points.length; ++i) {
           angle = 360 / pointCount * i * Perkogine.Deg2Rad;
           var newRadius = (radius + (0.5 * Math.sin(1 * thetas[i].theta)));
+          
           player.points[i].set(
             Math.cos(angle) * newRadius,
             Math.sin(angle) * newRadius
           );
+          
+          var dRadius = newRadius - radius;
+          
+          player.points[i].clamp(
+            new Perkogine.Vector2D(
+              wall - player.position.x + dRadius,
+              wall - player.position.y + dRadius
+            ),
+            new Perkogine.Vector2D(
+              renderer.width - wall - player.position.x + dRadius,
+              renderer.height - wall - player.position.y + dRadius
+            )
+          );
+          
           thetas[i].theta += thetas[i].delta;
         }
       }
@@ -107,11 +124,16 @@
                             
         player.position.add(delta);
         
-        if (player.bounds.left < 0) player.position.x -= player.bounds.left;
-        if (player.bounds.right > renderer.width) player.position.x -= player.bounds.right - renderer.width;
-        
-        if (player.bounds.top < 0) player.position.y -= player.bounds.top;
-        if (player.bounds.bottom > renderer.height) player.position.y -= player.bounds.bottom - renderer.height;
+        player.position.clamp(
+          new Perkogine.Vector2D(
+            wall + collRadius,
+            wall + collRadius
+          ),
+          new Perkogine.Vector2D(
+            renderer.width - wall - collRadius,
+            renderer.height - wall - collRadius
+          )
+        );
       }
       
       function checkEnemy() {
