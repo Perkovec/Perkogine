@@ -127,7 +127,7 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
     ctx.strokeStyle = object.borderColor;
     ctx.strokeWidth = object.borderWidth;
-    ctx.fillText(object.text, object.position.x, object.position.y);
+    ctx.fillText(object.text, object.bounds.left, object.bounds.bottom);
   }
   
   function fillAndStroke(object) {

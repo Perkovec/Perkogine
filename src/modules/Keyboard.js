@@ -6,16 +6,16 @@ Perkogine.Keyboard = function(target) {
   
   function keydown(event) {
     this.keys[event.keyCode || event.which] = true;
-		this.keys["shift"] = event.shiftKey;
-		this.keys["ctrl"] = event.ctrlKey;
-		this.keys["alt"] = event.altKey;
+		this.keys['shift'] = event.shiftKey;
+		this.keys['ctrl'] = event.ctrlKey;
+		this.keys['alt'] = event.altKey;
   }
   
   function keyup(event) {
     this.keys[event.keyCode || event.which] = false;
-		this.keys["shift"] = event.shiftKey;
-		this.keys["ctrl"] = event.ctrlKey;
-		this.keys["alt"] = event.altKey;
+		this.keys['shift'] = event.shiftKey;
+		this.keys['ctrl'] = event.ctrlKey;
+		this.keys['alt'] = event.altKey;
   }
 }
 

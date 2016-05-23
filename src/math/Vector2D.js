@@ -114,13 +114,6 @@ Perkogine.Vector2D.prototype.clamp = function(min, max) {
   return this;
 }
 
-Perkogine.Vector2D.prototype.clampScalar = function(min, max) {
-  this.x = Math.max(min, Math.min(max, this.x));
-  this.y = Math.max(min, Math.min(max, this.y));
-  
-  return this;
-}
-
 Perkogine.Vector2D.prototype.negate = function() {
   this.x = -this.x;
   this.y = -this.y;
