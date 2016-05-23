@@ -116,6 +116,15 @@
         }
       }
       
+      var minPlayerPos = new Perkogine.Vector2D(
+        wall + collRadius,
+        wall + collRadius
+      );
+          
+      var maxPlayerPos = new Perkogine.Vector2D(
+        renderer.width - wall - collRadius,
+        renderer.height - wall - collRadius
+      );
       function movePlayer() {
         var mousePos = mouse.clone();
         var delta = mousePos.sub(player.position)
@@ -125,14 +134,8 @@
         player.position.add(delta);
         
         player.position.clamp(
-          new Perkogine.Vector2D(
-            wall + collRadius,
-            wall + collRadius
-          ),
-          new Perkogine.Vector2D(
-            renderer.width - wall - collRadius,
-            renderer.height - wall - collRadius
-          )
+          minPlayerPos,
+          maxPlayerPos
         );
       }
       
