@@ -96,15 +96,11 @@ Perkogine.Renderer.prototype.Render = function(scene) {
   
   function DrawEllipse(object) {
     ctx.beginPath();
-    ctx.save();
-    ctx.translate(object.position.x, 
-                  object.position.y);
-    ctx.rotate(Perkogine.Deg2Rad * object.rotation);
-    ctx.scale(object.width / object.height, 1);
-    
-    ctx.arc(0, 0, object.height / 2, 0, Math.PI * 2, false);
+    ctx.ellipse(object.position.x, object.position.y, 
+                object.height / 2, object.width / 2,
+                object.rotation * Perkogine.Deg2Rad,
+                0, 2 * Math.PI);
     fillAndStroke(object);
-    ctx.restore();
   }
   
   function DrawPathShape(object) {
