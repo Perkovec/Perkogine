@@ -74,33 +74,43 @@ Perkogine.Renderer.prototype.Render = function(scene) {
       DrawPathShape(object);
     } else if (object instanceof Perkogine.Text) {
       DrawText(object);
+    } else if (object instanceof Perkogine.Line) {
+      DrawLine(object);
     }
   }
   
-  function DrawCircle(object) {
-    ctx.beginPath();
-    ctx.arc(object.position.x, object.position.y, object.radius * object.scale, 0, Math.PI * 2, false);
-    fillAndStroke(object);
-  }
-  
-  function DrawRectangle(object) {
+  function DrawObject(object, drawFunction) {
     ctx.beginPath();
     ctx.save();
     ctx.translate(object.position.x, 
                   object.position.y);
     ctx.rotate(Perkogine.Deg2Rad * object.rotation);
-    ctx.rect(-object.width / 2, -object.height / 2, object.width, object.height);
+    
+    drawFunction();
+    
     fillAndStroke(object);
     ctx.restore();
   }
   
+  function DrawCircle(object) {
+    DrawObject(object, function() {
+      ctx.arc(0, 0, object.radius * object.scale, 0, Math.PI * 2, false);
+    });
+  }
+  
+  function DrawRectangle(object) {
+    DrawObject(object, function() {
+      ctx.rect(-object.width / 2, -object.height / 2, object.width, object.height);
+    });
+  }
+  
   function DrawEllipse(object) {
-    ctx.beginPath();
-    ctx.ellipse(object.position.x, object.position.y, 
-                object.height / 2, object.width / 2,
-                object.rotation * Perkogine.Deg2Rad,
-                0, 2 * Math.PI);
-    fillAndStroke(object);
+    DrawObject(object, function() {
+      ctx.ellipse(0, 0, 
+                  object.width / 2, object.height / 2,
+                  0,
+                  0, 2 * Math.PI);
+    });
   }
   
   function DrawPathShape(object) {
@@ -108,13 +118,13 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     if (!points.length)
       return;
       
-    ctx.beginPath();
-    ctx.moveTo(object.position.x + points[0].x, object.position.y + points[0].y);
-    for (var i = 1; i < points.length; ++i) {
-      ctx.lineTo(object.position.x + points[i].x, object.position.y + points[i].y);
-    }
-    ctx.closePath();
-    fillAndStroke(object);
+    DrawObject(object, function() {
+      ctx.moveTo(points[0].x, points[0].y);
+      for (var i = 1; i < points.length; ++i) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+      ctx.closePath();
+    });
   }
   
   function DrawText(object) {
@@ -124,6 +134,17 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.strokeStyle = object.borderColor;
     ctx.strokeWidth = object.borderWidth;
     ctx.fillText(object.text, object.bounds.left, object.bounds.bottom);
+  }
+  
+  function DrawLine(object) {
+    ctx.beginPath();
+    
+    ctx.moveTo(object.start.x, object.start.y+0.5);
+    ctx.lineTo(object.end.x, object.end.y+0.5);
+    
+    ctx.strokeStyle = object.borderColor;
+    ctx.lineWidth = object.borderWidth;
+    if (object.borderWidth > 0) ctx.stroke();
   }
   
   function fillAndStroke(object) {
