@@ -273,12 +273,16 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     }
   }
   
-  function DrawObject(object, drawFunction) {
+  function DrawObject(object, drawFunction, ownPos) {
+    ownPos = ownPos || false;
     ctx.beginPath();
     ctx.save();
-    ctx.translate(object.position.x, 
-                  object.position.y);
-    ctx.rotate(Perkogine.Deg2Rad * object.rotation);
+    
+    if (!ownPos){
+      ctx.translate(object.position.x, 
+                    object.position.y);
+      ctx.rotate(Perkogine.Deg2Rad * object.rotation);
+    }
     
     drawFunction();
     
@@ -288,19 +292,20 @@ Perkogine.Renderer.prototype.Render = function(scene) {
   
   function DrawCircle(object) {
     DrawObject(object, function() {
-      ctx.arc(0, 0, object.radius * object.scale, 0, Math.PI * 2, false);
+      ctx.arc(object.width * (object.pivot.x - 0.5), object.width * (object.pivot.y - 0.5), 
+              object.radius * object.scale, 0, Math.PI * 2, false);
     });
   }
   
   function DrawRectangle(object) {
     DrawObject(object, function() {
-      ctx.rect(-object.width / 2, -object.height / 2, object.width, object.height);
+      ctx.rect(-object.width * object.pivot.x, -object.height * object.pivot.y, object.width, object.height);
     });
   }
   
   function DrawEllipse(object) {
     DrawObject(object, function() {
-      ctx.ellipse(0, 0, 
+      ctx.ellipse(object.width * (object.pivot.x - 0.5), object.height * (object.pivot.y - 0.5),
                   object.width / 2, object.height / 2,
                   0,
                   0, 2 * Math.PI);
@@ -331,14 +336,14 @@ Perkogine.Renderer.prototype.Render = function(scene) {
   }
   
   function DrawLine(object) {
-    ctx.beginPath();
-    
-    ctx.moveTo(object.start.x, object.start.y+0.5);
-    ctx.lineTo(object.end.x, object.end.y+0.5);
-    
-    ctx.strokeStyle = object.borderColor;
-    ctx.lineWidth = object.borderWidth;
-    if (object.borderWidth > 0) ctx.stroke();
+    DrawObject(object, function() {
+      ctx.translate(object.bounds.left + object.width / 2, 
+                    object.bounds.top + object.height / 2);
+      ctx.rotate(Perkogine.Deg2Rad * object.rotation);
+                    
+      ctx.moveTo(-object.width / 2, -object.height / 2 + 0.5);
+      ctx.lineTo(object.width / 2, object.height / 2 + 0.5);
+    }, true);
   }
   
   function fillAndStroke(object) {
@@ -358,6 +363,7 @@ Perkogine.Object = function(properties) {
   this.height = properties.height || 0;
   this.bounds = properties.bounds || {};
   this.layer = properties.layer !== undefined ? properties.layer : 0;
+  this.pivot = properties.pivot || new Perkogine.Vector2D(.5, .5);
   this.UUID = Perkogine.Math.UUID();
 }
 
@@ -388,9 +394,10 @@ Perkogine.Object.prototype.rotateAround = function(origin, angle) {
 
 Perkogine.Object.prototype.copy = function(original) {
   this.visible = original.visible;
-  this.position.copy( original.position );
+  this.position = original.position.clone();
   this.rotation = original.rotation;
   this.scale = original.scale;
+  this.pivot = original.pivot;
   
   return this;
 }
@@ -509,7 +516,7 @@ Perkogine.PathShape.prototype.clone = function() {
   return new this.constructor(this).copy(this);
 }
 Perkogine.Circle = function(properties) {
-  Perkogine.Object.call(this, arguments);
+  Perkogine.Object.call(this, properties);
   
   this.color = properties.color || '#FFFFFF';
   this.borderColor = properties.borderColor || '#FFFFFF';
@@ -527,6 +534,7 @@ Perkogine.Circle = function(properties) {
       top: position.y - radius,
       bottom: position.y + radius
     };
+    scope.width = scope.height = radius * 2;
   }
   
   Object.defineProperty(this, 'radius', {
@@ -563,7 +571,7 @@ Perkogine.Circle.prototype.clone = function() {
   return new this.constructor(this).copy(this);
 }
 Perkogine.Rectangle = function(properties) {
-  Perkogine.Object.call(this, arguments);
+  Perkogine.Object.call(this, properties);
   
   this.color = properties.color || '#FFFFFF';
   this.borderColor = properties.borderColor || '#FFFFFF';
@@ -626,7 +634,7 @@ Perkogine.Rectangle.prototype.clone = function() {
   return new this.constructor(this).copy(this);
 }
 Perkogine.Ellipse = function(properties) {
-  Perkogine.Object.call(this, arguments);
+  Perkogine.Object.call(this, properties);
   
   this.color = properties.color || '#FFFFFF';
   this.borderColor = properties.borderColor || '#FFFFFF';
@@ -680,6 +688,7 @@ Perkogine.Ellipse = function(properties) {
       updateBounds()
     }.bind(this)
   });
+  updateBounds();
 }
 
 Perkogine.Ellipse.prototype = Object.create(Perkogine.Object.prototype);
@@ -799,6 +808,8 @@ Perkogine.Line = function(properties) {
       top: start.y,
       bottom: end.y
     };
+    scope.width = scope.bounds.right - scope.bounds.left;
+    scope.height = scope.bounds.bottom - scope.bounds.top;
   }
   
   Object.defineProperty(this.start, 'x', {
@@ -864,6 +875,8 @@ Perkogine.Line = function(properties) {
     get: function() { return null; },
     set: function() {}
   });
+  
+  updateBounds();
 }
 
 Perkogine.Line.prototype = Object.create(Perkogine.Object.prototype);
@@ -871,6 +884,33 @@ Perkogine.Line.prototype.constructor = Perkogine.Line;
 
 Perkogine.Line.prototype.clone = function() {
   return new this.constructor(this).copy(this);
+}
+
+Perkogine.Line.prototype.translate = function(distance) {
+  var xDelta = Math.cos(Perkogine.Deg2Rad * this.rotation) * distance;
+  var yDelta = Math.sin(Perkogine.Deg2Rad * this.rotation) * distance;
+  
+  this.start.x += xDelta;
+  this.start.y += yDelta;
+  
+  this.end.x += xDelta;
+  this.end.y += yDelta;
+  
+  return this;
+}
+
+Perkogine.Line.prototype.rotateAround = function(origin, angle) {
+  angle = Perkogine.Deg2Rad * angle;
+  var pointStart = this.start.clone();
+  var pointEnd = this.end.clone();
+  
+  this.start.x = Math.cos(angle) * (pointStart.x - origin.x) - Math.sin(angle) * (pointStart.y - origin.y) + origin.x;
+  this.start.y = Math.cos(angle) * (pointStart.y - origin.y) + Math.sin(angle) * (pointStart.x - origin.x) + origin.y;
+  
+  this.end.x = Math.cos(angle) * (pointEnd.x - origin.x) - Math.sin(angle) * (pointEnd.y - origin.y) + origin.x;
+  this.end.y = Math.cos(angle) * (pointEnd.y - origin.y) + Math.sin(angle) * (pointEnd.x - origin.x) + origin.y;
+  
+  return this;
 }
 Perkogine.CountManager = function(count, callback) {
   this.count = count;
