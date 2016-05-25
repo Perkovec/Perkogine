@@ -181,6 +181,7 @@ Perkogine.Scene = function() {
 }
 
 Perkogine.Scene.prototype.Add = function(object) {
+  object.parent = this;
   this.objects.push(object);
 }
 
@@ -242,7 +243,20 @@ Perkogine.Renderer.prototype.enableLockPointer = function(onlock, onunlock) {
 Perkogine.Renderer.prototype.Render = function(scene) {
   var ctx = this._ctx;
   
-  var objects = scene.objects.filter(function(object) {
+  function oneArray(somearr){
+    var nArr = [];
+    for (var i = 0; i < somearr.length; i++){
+      if (somearr[i].children.length > 0){
+        nArr = nArr.concat(oneArray(somearr[i].children));
+      }
+      nArr.push(somearr[i]);
+    }
+    return nArr;
+  }
+  
+  var objects = oneArray(scene.objects);
+  
+  objects = objects.filter(function(object) {
     return object.visible;
   });
   
@@ -279,8 +293,10 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.save();
     
     if (!ownPos){
-      ctx.translate(object.position.x, 
-                    object.position.y);
+      var posX = object.position.x + (object.parent instanceof Perkogine.Object ? object.parent.position.x : 0);
+      var posY = object.position.y + (object.parent instanceof Perkogine.Object ? object.parent.position.y : 0);
+      ctx.translate(posX, 
+                    posY);
       ctx.rotate(Perkogine.Deg2Rad * object.rotation);
     }
     
@@ -332,7 +348,8 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
     ctx.strokeStyle = object.borderColor;
     ctx.strokeWidth = object.borderWidth;
-    ctx.fillText(object.text, object.bounds.left, object.bounds.bottom);
+    var parentPos = object.parent instanceof Perkogine.Object ? object.parent.position : new Perkogine.Vector2D();
+    ctx.fillText(object.text, object.bounds.left + parentPos.x, object.bounds.bottom + parentPos.y);
   }
   
   function DrawLine(object) {
@@ -364,6 +381,8 @@ Perkogine.Object = function(properties) {
   this.bounds = properties.bounds || {};
   this.layer = properties.layer !== undefined ? properties.layer : 0;
   this.pivot = properties.pivot || new Perkogine.Vector2D(.5, .5);
+  this.children = [];
+  this.parent = null;
   this.UUID = Perkogine.Math.UUID();
 }
 
@@ -402,9 +421,14 @@ Perkogine.Object.prototype.copy = function(original) {
   return this;
 }
 
+Perkogine.Object.prototype.Add = function(object) {
+  object.parent = this;
+  this.children.push(object);
+}
+
 Perkogine.Object.prototype.clone = function() {
   return new this.constructor().copy(this);
-};
+}
 Perkogine.PathShape = function(properties) {
   Perkogine.Object.call(this, properties);
   
@@ -698,9 +722,9 @@ Perkogine.Ellipse.prototype.clone = function() {
   return new this.constructor(this).copy(this);
 }
 Perkogine.Text = function(properties) {
-  Perkogine.Object.call(this, arguments);
+  Perkogine.Object.call(this, properties);
   
-  this.color = properties.color || '#FFFFFF';
+  this.color = properties.color || '#000000';
   this.borderColor = properties.borderColor || '#FFFFFF';
   this.borderWidth = properties.borderWidth || 0;
   this.texture = properties.texture || null;
@@ -779,6 +803,7 @@ Perkogine.Text = function(properties) {
       bottom: position.y + scope.height / 2.0
     };
   }
+  updateParams();
 }
 
 Perkogine.Text.prototype = Object.create(Perkogine.Object.prototype);

@@ -59,6 +59,13 @@
       })
       player.position.set(halfW, halfH);
       
+      var nickname = new Perkogine.Text({
+        text: 'Perkovec',
+        layer: 2
+      });
+      
+      player.Add(nickname);
+      
       scene.Add(player);
       
       var colors = [
