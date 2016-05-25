@@ -10,6 +10,7 @@
   "src/objects/Rectangle.js",
   "src/objects/Ellipse.js",
   "src/objects/Text.js",
+  "src/objects/Line.js",
   "src/managers/CountManager.js",
   "src/managers/AssetsManager.js",
   "src/modules/Keyboard.js"

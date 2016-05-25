@@ -22,7 +22,7 @@
           radius: 50,
           texture: assets.assets['pattern'],
           borderColor: 'black',
-          borderWidth: 10
+          borderWidth: 2
         })
         circle.position.set(250, 130);
       
@@ -31,15 +31,43 @@
           height: 100,
           texture: assets.assets['pattern'],
           borderColor: 'black',
-          borderWidth: 10
+          borderWidth: 2
         });
         rectangle.position.set(250, 250);
+        
+        var ellipse1 = new Perkogine.Ellipse({
+          width: 100,
+          height: 50,
+          texture: assets.assets['pattern'],
+          borderColor: 'black',
+          borderWidth: 2
+        });
+        ellipse1.position.set(50, 50);
+        ellipse1.rotation = 45;
+      
+        var ellipse2 = ellipse1.clone();
+        ellipse2.position.set(renderer.width - 50, 50);
+        ellipse2.rotation = -45;
       
         scene.Add(circle);
         scene.Add(rectangle);
+        scene.Add(ellipse1);
+        scene.Add(ellipse2);
+        
+        
+        var centerPoint = new Perkogine.Vector2D(renderer.width / 2, renderer.height / 2);
       
-        renderer.clear();
-        renderer.Render(scene);
+        function update() {
+          requestAnimationFrame(update);
+        
+          circle.rotateAround(centerPoint, 3);
+              
+          rectangle.rotate(-5);
+              
+          renderer.clear();
+          renderer.Render(scene);
+        }
+        update();
       }
     </script>
   </body>

@@ -268,37 +268,43 @@ Perkogine.Renderer.prototype.Render = function(scene) {
       DrawPathShape(object);
     } else if (object instanceof Perkogine.Text) {
       DrawText(object);
+    } else if (object instanceof Perkogine.Line) {
+      DrawLine(object);
     }
   }
   
-  function DrawCircle(object) {
+  function DrawObject(object, drawFunction) {
     ctx.beginPath();
-    ctx.arc(object.position.x, object.position.y, object.radius * object.scale, 0, Math.PI * 2, false);
+    ctx.save();
+    ctx.translate(object.position.x, 
+                  object.position.y);
+    ctx.rotate(Perkogine.Deg2Rad * object.rotation);
+    
+    drawFunction();
+    
     fillAndStroke(object);
+    ctx.restore();
+  }
+  
+  function DrawCircle(object) {
+    DrawObject(object, function() {
+      ctx.arc(0, 0, object.radius * object.scale, 0, Math.PI * 2, false);
+    });
   }
   
   function DrawRectangle(object) {
-    ctx.beginPath();
-    ctx.save();
-    ctx.translate(object.position.x, 
-                  object.position.y);
-    ctx.rotate(Perkogine.Deg2Rad * object.rotation);
-    ctx.rect(-object.width / 2, -object.height / 2, object.width, object.height);
-    fillAndStroke(object);
-    ctx.restore();
+    DrawObject(object, function() {
+      ctx.rect(-object.width / 2, -object.height / 2, object.width, object.height);
+    });
   }
   
   function DrawEllipse(object) {
-    ctx.beginPath();
-    ctx.save();
-    ctx.translate(object.position.x, 
-                  object.position.y);
-    ctx.rotate(Perkogine.Deg2Rad * object.rotation);
-    ctx.scale(object.width / object.height, 1);
-    
-    ctx.arc(0, 0, object.height / 2, 0, Math.PI * 2, false);
-    fillAndStroke(object);
-    ctx.restore();
+    DrawObject(object, function() {
+      ctx.ellipse(0, 0, 
+                  object.width / 2, object.height / 2,
+                  0,
+                  0, 2 * Math.PI);
+    });
   }
   
   function DrawPathShape(object) {
@@ -306,13 +312,13 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     if (!points.length)
       return;
       
-    ctx.beginPath();
-    ctx.moveTo(object.position.x + points[0].x, object.position.y + points[0].y);
-    for (var i = 1; i < points.length; ++i) {
-      ctx.lineTo(object.position.x + points[i].x, object.position.y + points[i].y);
-    }
-    ctx.closePath();
-    fillAndStroke(object);
+    DrawObject(object, function() {
+      ctx.moveTo(points[0].x, points[0].y);
+      for (var i = 1; i < points.length; ++i) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+      ctx.closePath();
+    });
   }
   
   function DrawText(object) {
@@ -322,6 +328,17 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.strokeStyle = object.borderColor;
     ctx.strokeWidth = object.borderWidth;
     ctx.fillText(object.text, object.bounds.left, object.bounds.bottom);
+  }
+  
+  function DrawLine(object) {
+    ctx.beginPath();
+    
+    ctx.moveTo(object.start.x, object.start.y+0.5);
+    ctx.lineTo(object.end.x, object.end.y+0.5);
+    
+    ctx.strokeStyle = object.borderColor;
+    ctx.lineWidth = object.borderWidth;
+    if (object.borderWidth > 0) ctx.stroke();
   }
   
   function fillAndStroke(object) {
@@ -759,6 +776,100 @@ Perkogine.Text.prototype = Object.create(Perkogine.Object.prototype);
 Perkogine.Text.prototype.constructor = Perkogine.Ellipse;
 
 Perkogine.Text.prototype.clone = function() {
+  return new this.constructor(this).copy(this);
+}
+Perkogine.Line = function(properties) {
+  Perkogine.Object.call(this, properties);
+  
+  this.borderColor = properties.borderColor || '#000000';
+  this.borderWidth = properties.borderWidth || 1;
+  this.texture = properties.texture || null;
+  this.start = properties.start || new Perkogine.Vector2D();
+  this.end = properties.end || new Perkogine.Vector2D();
+  
+  var position = this.position.clone();
+  var start = this.start.clone();
+  var end = this.end.clone();
+  
+  var scope = this;
+  function updateBounds() {
+    scope.bounds = {
+      left: start.x,
+      right: end.x,
+      top: start.y,
+      bottom: end.y
+    };
+  }
+  
+  Object.defineProperty(this.start, 'x', {
+    get: function() { return start.x; },
+    set: function(newStartX) {
+      start.x = newStartX;
+      updateBounds();
+    }
+  });
+  
+  Object.defineProperty(this.start, 'y', {
+    get: function() { return start.y; },
+    set: function(newStartY) {
+      start.y = newStartY;
+      updateBounds();
+    }
+  });
+  
+  Object.defineProperty(this, 'start', {
+    get: function() { return start; },
+    set: function(newStart) {
+      start = newStart;
+      updateBounds();
+    }
+  });
+  
+  Object.defineProperty(this.end, 'x', {
+    get: function() { return end.x; },
+    set: function(newEndX) {
+      end.x = newEndX;
+      updateBounds();
+    }
+  });
+  
+  Object.defineProperty(this.end, 'y', {
+    get: function() { return end.y; },
+    set: function(newEndY) {
+      end.y = newEndY;
+      updateBounds();
+    }
+  });
+  
+  Object.defineProperty(this, 'end', {
+    get: function() { return end; },
+    set: function(newEnd) {
+      end = newEnd;
+      updateBounds();
+    }
+  });
+  
+  
+  Object.defineProperty(this.position, 'x', {
+    get: function() { return null; },
+    set: function() {}
+  });
+  
+  Object.defineProperty(this.position, 'y', {
+    get: function() { return null; },
+    set: function() {}
+  });
+  
+  Object.defineProperty(this, 'position', {
+    get: function() { return null; },
+    set: function() {}
+  });
+}
+
+Perkogine.Line.prototype = Object.create(Perkogine.Object.prototype);
+Perkogine.Line.prototype.constructor = Perkogine.Line;
+
+Perkogine.Line.prototype.clone = function() {
   return new this.constructor(this).copy(this);
 }
 Perkogine.CountManager = function(count, callback) {
