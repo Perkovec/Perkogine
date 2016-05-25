@@ -48,7 +48,20 @@ Perkogine.Renderer.prototype.enableLockPointer = function(onlock, onunlock) {
 Perkogine.Renderer.prototype.Render = function(scene) {
   var ctx = this._ctx;
   
-  var objects = scene.objects.filter(function(object) {
+  function oneArray(somearr){
+    var nArr = [];
+    for (var i = 0; i < somearr.length; i++){
+      if (somearr[i].children.length > 0){
+        nArr = nArr.concat(oneArray(somearr[i].children));
+      }
+      nArr.push(somearr[i]);
+    }
+    return nArr;
+  }
+  
+  var objects = oneArray(scene.objects);
+  
+  objects = objects.filter(function(object) {
     return object.visible;
   });
   
@@ -85,8 +98,10 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.save();
     
     if (!ownPos){
-      ctx.translate(object.position.x, 
-                    object.position.y);
+      var posX = object.position.x + (object.parent instanceof Perkogine.Object ? object.parent.position.x : 0);
+      var posY = object.position.y + (object.parent instanceof Perkogine.Object ? object.parent.position.y : 0);
+      ctx.translate(posX, 
+                    posY);
       ctx.rotate(Perkogine.Deg2Rad * object.rotation);
     }
     
@@ -138,7 +153,8 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
     ctx.strokeStyle = object.borderColor;
     ctx.strokeWidth = object.borderWidth;
-    ctx.fillText(object.text, object.bounds.left, object.bounds.bottom);
+    var parentPos = object.parent instanceof Perkogine.Object ? object.parent.position : new Perkogine.Vector2D();
+    ctx.fillText(object.text, object.bounds.left + parentPos.x, object.bounds.bottom + parentPos.y);
   }
   
   function DrawLine(object) {

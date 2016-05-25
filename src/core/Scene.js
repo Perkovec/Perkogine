@@ -3,6 +3,7 @@ Perkogine.Scene = function() {
 }
 
 Perkogine.Scene.prototype.Add = function(object) {
+  object.parent = this;
   this.objects.push(object);
 }
 

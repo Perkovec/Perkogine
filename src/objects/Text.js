@@ -1,7 +1,7 @@
 Perkogine.Text = function(properties) {
-  Perkogine.Object.call(this, arguments);
+  Perkogine.Object.call(this, properties);
   
-  this.color = properties.color || '#FFFFFF';
+  this.color = properties.color || '#000000';
   this.borderColor = properties.borderColor || '#FFFFFF';
   this.borderWidth = properties.borderWidth || 0;
   this.texture = properties.texture || null;
@@ -80,6 +80,7 @@ Perkogine.Text = function(properties) {
       bottom: position.y + scope.height / 2.0
     };
   }
+  updateParams();
 }
 
 Perkogine.Text.prototype = Object.create(Perkogine.Object.prototype);

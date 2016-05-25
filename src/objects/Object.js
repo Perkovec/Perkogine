@@ -8,6 +8,8 @@ Perkogine.Object = function(properties) {
   this.bounds = properties.bounds || {};
   this.layer = properties.layer !== undefined ? properties.layer : 0;
   this.pivot = properties.pivot || new Perkogine.Vector2D(.5, .5);
+  this.children = [];
+  this.parent = null;
   this.UUID = Perkogine.Math.UUID();
 }
 
@@ -46,6 +48,11 @@ Perkogine.Object.prototype.copy = function(original) {
   return this;
 }
 
+Perkogine.Object.prototype.Add = function(object) {
+  object.parent = this;
+  this.children.push(object);
+}
+
 Perkogine.Object.prototype.clone = function() {
   return new this.constructor().copy(this);
-};
+}
