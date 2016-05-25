@@ -7,6 +7,7 @@ Perkogine.Object = function(properties) {
   this.height = properties.height || 0;
   this.bounds = properties.bounds || {};
   this.layer = properties.layer !== undefined ? properties.layer : 0;
+  this.pivot = properties.pivot || new Perkogine.Vector2D(.5, .5);
   this.UUID = Perkogine.Math.UUID();
 }
 
@@ -37,9 +38,10 @@ Perkogine.Object.prototype.rotateAround = function(origin, angle) {
 
 Perkogine.Object.prototype.copy = function(original) {
   this.visible = original.visible;
-  this.position.copy( original.position );
+  this.position = original.position.clone();
   this.rotation = original.rotation;
   this.scale = original.scale;
+  this.pivot = original.pivot;
   
   return this;
 }

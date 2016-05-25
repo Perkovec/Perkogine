@@ -79,12 +79,16 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     }
   }
   
-  function DrawObject(object, drawFunction) {
+  function DrawObject(object, drawFunction, ownPos) {
+    ownPos = ownPos || false;
     ctx.beginPath();
     ctx.save();
-    ctx.translate(object.position.x, 
-                  object.position.y);
-    ctx.rotate(Perkogine.Deg2Rad * object.rotation);
+    
+    if (!ownPos){
+      ctx.translate(object.position.x, 
+                    object.position.y);
+      ctx.rotate(Perkogine.Deg2Rad * object.rotation);
+    }
     
     drawFunction();
     
@@ -94,19 +98,20 @@ Perkogine.Renderer.prototype.Render = function(scene) {
   
   function DrawCircle(object) {
     DrawObject(object, function() {
-      ctx.arc(0, 0, object.radius * object.scale, 0, Math.PI * 2, false);
+      ctx.arc(object.width * (object.pivot.x - 0.5), object.width * (object.pivot.y - 0.5), 
+              object.radius * object.scale, 0, Math.PI * 2, false);
     });
   }
   
   function DrawRectangle(object) {
     DrawObject(object, function() {
-      ctx.rect(-object.width / 2, -object.height / 2, object.width, object.height);
+      ctx.rect(-object.width * object.pivot.x, -object.height * object.pivot.y, object.width, object.height);
     });
   }
   
   function DrawEllipse(object) {
     DrawObject(object, function() {
-      ctx.ellipse(0, 0, 
+      ctx.ellipse(object.width * (object.pivot.x - 0.5), object.height * (object.pivot.y - 0.5),
                   object.width / 2, object.height / 2,
                   0,
                   0, 2 * Math.PI);
@@ -137,14 +142,14 @@ Perkogine.Renderer.prototype.Render = function(scene) {
   }
   
   function DrawLine(object) {
-    ctx.beginPath();
-    
-    ctx.moveTo(object.start.x, object.start.y+0.5);
-    ctx.lineTo(object.end.x, object.end.y+0.5);
-    
-    ctx.strokeStyle = object.borderColor;
-    ctx.lineWidth = object.borderWidth;
-    if (object.borderWidth > 0) ctx.stroke();
+    DrawObject(object, function() {
+      ctx.translate(object.bounds.left + object.width / 2, 
+                    object.bounds.top + object.height / 2);
+      ctx.rotate(Perkogine.Deg2Rad * object.rotation);
+                    
+      ctx.moveTo(-object.width / 2, -object.height / 2 + 0.5);
+      ctx.lineTo(object.width / 2, object.height / 2 + 0.5);
+    }, true);
   }
   
   function fillAndStroke(object) {

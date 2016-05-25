@@ -1,5 +1,5 @@
 Perkogine.Ellipse = function(properties) {
-  Perkogine.Object.call(this, arguments);
+  Perkogine.Object.call(this, properties);
   
   this.color = properties.color || '#FFFFFF';
   this.borderColor = properties.borderColor || '#FFFFFF';
@@ -53,6 +53,7 @@ Perkogine.Ellipse = function(properties) {
       updateBounds()
     }.bind(this)
   });
+  updateBounds();
 }
 
 Perkogine.Ellipse.prototype = Object.create(Perkogine.Object.prototype);

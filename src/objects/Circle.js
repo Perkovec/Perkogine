@@ -1,5 +1,5 @@
 Perkogine.Circle = function(properties) {
-  Perkogine.Object.call(this, arguments);
+  Perkogine.Object.call(this, properties);
   
   this.color = properties.color || '#FFFFFF';
   this.borderColor = properties.borderColor || '#FFFFFF';
@@ -17,6 +17,7 @@ Perkogine.Circle = function(properties) {
       top: position.y - radius,
       bottom: position.y + radius
     };
+    scope.width = scope.height = radius * 2;
   }
   
   Object.defineProperty(this, 'radius', {
