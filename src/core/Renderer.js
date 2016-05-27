@@ -98,8 +98,13 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.save();
     
     if (!ownPos){
-      var posX = object.position.x + (object.parent instanceof Perkogine.Object ? object.parent.position.x : 0);
-      var posY = object.position.y + (object.parent instanceof Perkogine.Object ? object.parent.position.y : 0);
+      var parentPos = object.parent instanceof Perkogine.Object ? object.parent.position : new Perkogine.Vector2D();
+      var parentRot = object.parent instanceof Perkogine.Object ? object.parent.rotation : 0;
+      var distance = Math.sqrt(object.localPosition.x * object.localPosition.x + object.localPosition.y * object.localPosition.y);
+      var angle = Math.asin(distance == 0 ? 0 : object.localPosition.y / distance) + parentRot * Perkogine.Deg2Rad;
+      var posX = parentPos.x + Math.cos(angle) * distance;
+      var posY = parentPos.y + Math.sin(angle) * distance;
+      //console.log(distance == 0 ? 0 : object.localPosition.y / distance)
       ctx.translate(posX, 
                     posY);
       ctx.rotate(Perkogine.Deg2Rad * object.rotation);
@@ -149,12 +154,27 @@ Perkogine.Renderer.prototype.Render = function(scene) {
   
   function DrawText(object) {
     ctx.beginPath();
+    ctx.save();
+    
+    var parentPos = object.parent instanceof Perkogine.Object ? object.parent.position : new Perkogine.Vector2D();
+    var parentRot = object.parent instanceof Perkogine.Object ? object.parent.rotation : 0;
+    var deltaPos = object.position.clone().sub(object.localPosition);
+    var distance = Math.sqrt(object.localPosition.x * object.localPosition.x + object.localPosition.y * object.localPosition.y);
+    
+    var angle = (Math.asin(object.localPosition.y * (distance == 0 ? 0 : 1 / distance ) ) + parentRot) * Perkogine.Deg2Rad;
+    var posX = parentPos.x + Math.cos(angle) * distance;
+    var posY = parentPos.y + Math.sin(angle) * distance;
+    ctx.translate(posX, 
+                  posY);
+    ctx.rotate(Perkogine.Deg2Rad * (object.rotation + parentRot));
+      
     ctx.font = object.fontSize + "px " + object.font;
     ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
     ctx.strokeStyle = object.borderColor;
     ctx.strokeWidth = object.borderWidth;
-    var parentPos = object.parent instanceof Perkogine.Object ? object.parent.position : new Perkogine.Vector2D();
-    ctx.fillText(object.text, object.bounds.left + parentPos.x, object.bounds.bottom + parentPos.y);
+    
+    ctx.fillText(object.text, -object.width * object.pivot.x, object.height * object.pivot.y );
+    ctx.restore();
   }
   
   function DrawLine(object) {

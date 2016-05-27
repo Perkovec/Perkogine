@@ -12,6 +12,8 @@ Perkogine.Text = function(properties) {
   var fontSize = 16;
   var font = "Arial";
   var position = this.position.clone();
+  var localPosition = this.localPosition.clone();
+  
   Object.defineProperty(this, 'text', {
     get: function() {
       return text;
@@ -43,23 +45,39 @@ Perkogine.Text = function(properties) {
   });
   
   Object.defineProperty(this.position, 'x', {
-    get: function() {
-      return position.x;
-    },
+    get: function() { return position.x; },
     set: function(newX) {
+      localPosition.x += newX - position.x;
       position.x = newX;
-      updateParams();
+      updateParams()
     }
   });
   
   Object.defineProperty(this.position, 'y', {
-    get: function() {
-      return position.y;
-    },
+    get: function() { return position.y; },
     set: function(newY) {
+      localPosition.y += newY - position.Y;
       position.y = newY;
-      updateParams();
+      updateParams()
     }
+  });
+  
+  Object.defineProperty(this.localPosition, 'x', {
+    get: function() { return localPosition.x; },
+    set: function(newX) {
+      position.x += newX - localPosition.x;
+      localPosition.x = newX;
+      updateParams()
+    }.bind(this)
+  });
+  
+  Object.defineProperty(this.localPosition, 'y', {
+    get: function() { return localPosition.y; },
+    set: function(newY) {
+      position.y += newY - localPosition.y;
+      localPosition.y = newY;
+      updateParams()
+    }.bind(this)
   });
   
   font = properties.font || "Arial";

@@ -9,6 +9,7 @@ Perkogine.Ellipse = function(properties) {
   var width = properties.width || 0;
   var height = properties.height || 0;
   var position = this.position.clone();
+  var localPosition = this.localPosition.clone();
   
   var scope = this;
   function updateBounds() {
@@ -41,19 +42,39 @@ Perkogine.Ellipse = function(properties) {
   Object.defineProperty(this.position, 'x', {
     get: function() { return position.x; },
     set: function(newX) {
+      localPosition.x += newX - position.x;
       position.x = newX;
       updateBounds()
-    }.bind(this)
+    }
   });
   
   Object.defineProperty(this.position, 'y', {
     get: function() { return position.y; },
     set: function(newY) {
+      localPosition.y += newY - position.y;
       position.y = newY;
+      updateBounds()
+    }
+  });
+  updateBounds();
+  
+  Object.defineProperty(this.localPosition, 'x', {
+    get: function() { return localPosition.x; },
+    set: function(newX) {
+      position.x += newX - localPosition.x;
+      localPosition.x = newX;
       updateBounds()
     }.bind(this)
   });
-  updateBounds();
+  
+  Object.defineProperty(this.localPosition, 'y', {
+    get: function() { return localPosition.y; },
+    set: function(newY) {
+      position.y += newY - localPosition.y;
+      localPosition.y = newY;
+      updateBounds()
+    }.bind(this)
+  });
 }
 
 Perkogine.Ellipse.prototype = Object.create(Perkogine.Object.prototype);

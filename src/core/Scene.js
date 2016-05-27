@@ -4,6 +4,9 @@ Perkogine.Scene = function() {
 
 Perkogine.Scene.prototype.Add = function(object) {
   object.parent = this;
+  if (!(object instanceof Perkogine.Line)){
+    object.localPosition.set(object.position.x, object.position.y);
+  }
   this.objects.push(object);
 }
 

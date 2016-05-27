@@ -8,7 +8,9 @@ Perkogine.PathShape = function(properties) {
   
   var points = properties.points || [];
   var position = this.position.clone();
+  var localPosition = this.localPosition.clone();
   var scope = this;
+  
   calculateParams();
   Object.defineProperty(this, 'points', {
     set: function(newPoints) {
@@ -23,6 +25,7 @@ Perkogine.PathShape = function(properties) {
   Object.defineProperty(this.position, 'x', {
     get: function() { return position.x; },
     set: function(newX) {
+      localPosition.x += newX - position.x;
       position.x = newX;
       calculateParams()
     }
@@ -31,8 +34,27 @@ Perkogine.PathShape = function(properties) {
   Object.defineProperty(this.position, 'y', {
     get: function() { return position.y; },
     set: function(newY) {
+      localPosition.y += newY - position.y;
       position.y = newY;
-      calculateParams();
+      calculateParams()
+    }
+  });
+  
+  Object.defineProperty(this.localPosition, 'x', {
+    get: function() { return localPosition.x; },
+    set: function(newX) {
+      position.x += newX - localPosition.x;
+      localPosition.x = newX;
+      calculateParams()
+    }
+  });
+  
+  Object.defineProperty(this.localPosition, 'y', {
+    get: function() { return localPosition.y; },
+    set: function(newY) {
+      position.y += newY - localPosition.y;
+      localPosition.y = newY;
+      calculateParams()
     }
   });
   
