@@ -89,6 +89,8 @@ Perkogine.Renderer.prototype.Render = function(scene) {
       DrawText(object);
     } else if (object instanceof Perkogine.Line) {
       DrawLine(object);
+    } else if (object instanceof Perkogine.Image) {
+      DrawImage(object);
     }
   }
   
@@ -186,6 +188,12 @@ Perkogine.Renderer.prototype.Render = function(scene) {
       ctx.moveTo(-object.width / 2, -object.height / 2 + 0.5);
       ctx.lineTo(object.width / 2, object.height / 2 + 0.5);
     }, true);
+  }
+  
+  function DrawImage(object) {
+    DrawObject(object, function() {
+      ctx.drawImage(object.image, -object.width * object.pivot.x, -object.height * object.pivot.y, object.width, object.height);
+    });
   }
   
   function fillAndStroke(object) {

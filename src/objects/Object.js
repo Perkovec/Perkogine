@@ -44,9 +44,6 @@ Perkogine.Object.prototype.rotateAround = function(origin, angle) {
   this.position.x = Math.cos(angle) * (point.x - origin.x) - Math.sin(angle) * (point.y - origin.y) + origin.x;
   this.position.y = Math.cos(angle) * (point.y - origin.y) + Math.sin(angle) * (point.x - origin.x) + origin.y;
   
-  //this.localPosition.x += this.position.x - point.x;
-  //this.localPosition.y += this.position.y - point.y;
-  
   return this;
 }
 
