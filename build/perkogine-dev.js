@@ -182,6 +182,9 @@ Perkogine.Scene = function() {
 
 Perkogine.Scene.prototype.Add = function(object) {
   object.parent = this;
+  if (!(object instanceof Perkogine.Line)){
+    object.localPosition.set(object.position.x, object.position.y);
+  }
   this.objects.push(object);
 }
 
@@ -284,6 +287,8 @@ Perkogine.Renderer.prototype.Render = function(scene) {
       DrawText(object);
     } else if (object instanceof Perkogine.Line) {
       DrawLine(object);
+    } else if (object instanceof Perkogine.Image) {
+      DrawImage(object);
     }
   }
   
@@ -293,8 +298,13 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     ctx.save();
     
     if (!ownPos){
-      var posX = object.position.x + (object.parent instanceof Perkogine.Object ? object.parent.position.x : 0);
-      var posY = object.position.y + (object.parent instanceof Perkogine.Object ? object.parent.position.y : 0);
+      var parentPos = object.parent instanceof Perkogine.Object ? object.parent.position : new Perkogine.Vector2D();
+      var parentRot = object.parent instanceof Perkogine.Object ? object.parent.rotation : 0;
+      var distance = Math.sqrt(object.localPosition.x * object.localPosition.x + object.localPosition.y * object.localPosition.y);
+      var angle = Math.asin(distance == 0 ? 0 : object.localPosition.y / distance) + parentRot * Perkogine.Deg2Rad;
+      var posX = parentPos.x + Math.cos(angle) * distance;
+      var posY = parentPos.y + Math.sin(angle) * distance;
+      //console.log(distance == 0 ? 0 : object.localPosition.y / distance)
       ctx.translate(posX, 
                     posY);
       ctx.rotate(Perkogine.Deg2Rad * object.rotation);
@@ -344,12 +354,27 @@ Perkogine.Renderer.prototype.Render = function(scene) {
   
   function DrawText(object) {
     ctx.beginPath();
+    ctx.save();
+    
+    var parentPos = object.parent instanceof Perkogine.Object ? object.parent.position : new Perkogine.Vector2D();
+    var parentRot = object.parent instanceof Perkogine.Object ? object.parent.rotation : 0;
+    var deltaPos = object.position.clone().sub(object.localPosition);
+    var distance = Math.sqrt(object.localPosition.x * object.localPosition.x + object.localPosition.y * object.localPosition.y);
+    
+    var angle = (Math.asin(object.localPosition.y * (distance == 0 ? 0 : 1 / distance ) ) + parentRot) * Perkogine.Deg2Rad;
+    var posX = parentPos.x + Math.cos(angle) * distance;
+    var posY = parentPos.y + Math.sin(angle) * distance;
+    ctx.translate(posX, 
+                  posY);
+    ctx.rotate(Perkogine.Deg2Rad * (object.rotation + parentRot));
+      
     ctx.font = object.fontSize + "px " + object.font;
     ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
     ctx.strokeStyle = object.borderColor;
     ctx.strokeWidth = object.borderWidth;
-    var parentPos = object.parent instanceof Perkogine.Object ? object.parent.position : new Perkogine.Vector2D();
-    ctx.fillText(object.text, object.bounds.left + parentPos.x, object.bounds.bottom + parentPos.y);
+    
+    ctx.fillText(object.text, -object.width * object.pivot.x, object.height * object.pivot.y );
+    ctx.restore();
   }
   
   function DrawLine(object) {
@@ -363,6 +388,12 @@ Perkogine.Renderer.prototype.Render = function(scene) {
     }, true);
   }
   
+  function DrawImage(object) {
+    DrawObject(object, function() {
+      ctx.drawImage(object.image, -object.width * object.pivot.x, -object.height * object.pivot.y, object.width, object.height);
+    });
+  }
+  
   function fillAndStroke(object) {
     ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
     ctx.fill();
@@ -374,7 +405,9 @@ Perkogine.Renderer.prototype.Render = function(scene) {
 Perkogine.Object = function(properties) {
   this.visible = properties.visible || true;
   this.position = properties.position || new Perkogine.Vector2D();
+  this.localPosition = properties.position || new Perkogine.Vector2D();
   this.rotation = properties.rotation || 0;
+  this.localRotation = this.rotation;
   this.scale = properties.scale || 1;
   this.width = properties.width || 0;
   this.height = properties.height || 0;
@@ -389,14 +422,21 @@ Perkogine.Object = function(properties) {
 Perkogine.Object.prototype.constructor = Perkogine.Object;
 
 Perkogine.Object.prototype.translate = function(distance) {
-  this.position.x += Math.cos(Perkogine.Deg2Rad * this.rotation) * distance;
-  this.position.y += Math.sin(Perkogine.Deg2Rad * this.rotation) * distance;
+  var deltaX = Math.cos(Perkogine.Deg2Rad * this.rotation) * distance;
+  var deltaY = Math.sin(Perkogine.Deg2Rad * this.rotation) * distance;
+  this.position.x += deltaX;
+  this.position.y += deltaY;
+  
+  this.localPosition.x += deltaX;
+  this.localPosition.y += deltaY;
   
   return this;
 }
 
 Perkogine.Object.prototype.rotate = function(angle) {
   this.rotation += angle;
+  
+  this.localRotation += angle;
   
   return this;
 }
@@ -414,7 +454,9 @@ Perkogine.Object.prototype.rotateAround = function(origin, angle) {
 Perkogine.Object.prototype.copy = function(original) {
   this.visible = original.visible;
   this.position = original.position.clone();
+  this.localPosition = original.localPosition.clone();
   this.rotation = original.rotation;
+  this.localRotation = original.localRotation;
   this.scale = original.scale;
   this.pivot = original.pivot;
   
@@ -423,6 +465,10 @@ Perkogine.Object.prototype.copy = function(original) {
 
 Perkogine.Object.prototype.Add = function(object) {
   object.parent = this;
+  if (!(object instanceof Perkogine.Line)){
+    var local = object.position.clone().sub(this.position);
+    object.localPosition.set(local.x, local.y);
+  }
   this.children.push(object);
 }
 
@@ -439,7 +485,9 @@ Perkogine.PathShape = function(properties) {
   
   var points = properties.points || [];
   var position = this.position.clone();
+  var localPosition = this.localPosition.clone();
   var scope = this;
+  
   calculateParams();
   Object.defineProperty(this, 'points', {
     set: function(newPoints) {
@@ -454,6 +502,7 @@ Perkogine.PathShape = function(properties) {
   Object.defineProperty(this.position, 'x', {
     get: function() { return position.x; },
     set: function(newX) {
+      localPosition.x += newX - position.x;
       position.x = newX;
       calculateParams()
     }
@@ -462,8 +511,27 @@ Perkogine.PathShape = function(properties) {
   Object.defineProperty(this.position, 'y', {
     get: function() { return position.y; },
     set: function(newY) {
+      localPosition.y += newY - position.y;
       position.y = newY;
-      calculateParams();
+      calculateParams()
+    }
+  });
+  
+  Object.defineProperty(this.localPosition, 'x', {
+    get: function() { return localPosition.x; },
+    set: function(newX) {
+      position.x += newX - localPosition.x;
+      localPosition.x = newX;
+      calculateParams()
+    }
+  });
+  
+  Object.defineProperty(this.localPosition, 'y', {
+    get: function() { return localPosition.y; },
+    set: function(newY) {
+      position.y += newY - localPosition.y;
+      localPosition.y = newY;
+      calculateParams()
     }
   });
   
@@ -549,6 +617,7 @@ Perkogine.Circle = function(properties) {
   
   var position = this.position.clone();
   var radius = properties.radius || 0;
+  var localPosition = this.localPosition.clone();
   
   var scope = this;
   function updateBounds() {
@@ -574,6 +643,7 @@ Perkogine.Circle = function(properties) {
   Object.defineProperty(this.position, 'x', {
     get: function() { return position.x; },
     set: function(newX) {
+      localPosition.x += newX - position.x;
       position.x = newX;
       updateBounds()
     }
@@ -582,8 +652,27 @@ Perkogine.Circle = function(properties) {
   Object.defineProperty(this.position, 'y', {
     get: function() { return position.y; },
     set: function(newY) {
+      localPosition.y += newY - position.y;
       position.y = newY;
       updateBounds()
+    }
+  });
+  
+  Object.defineProperty(this.localPosition, 'x', {
+    get: function() { return localPosition.x; },
+    set: function(newX) {
+      position.x += newX - localPosition.x;
+      localPosition.x = newX;
+      updateBounds();
+    }
+  });
+  
+  Object.defineProperty(this.localPosition, 'y', {
+    get: function() { return localPosition.y; },
+    set: function(newY) {
+      position.y += newY - localPosition.y;
+      localPosition.y = newY;
+      updateBounds();
     }
   });
 }
@@ -605,6 +694,7 @@ Perkogine.Rectangle = function(properties) {
   var width = properties.width || 0;
   var height = properties.height || 0;
   var position = this.position.clone();
+  var localPosition = this.localPosition.clone();
   
   var scope = this;
   function updateBounds() {
@@ -637,6 +727,7 @@ Perkogine.Rectangle = function(properties) {
   Object.defineProperty(this.position, 'x', {
     get: function() { return position.x; },
     set: function(newX) {
+      localPosition.x += newX - position.x;
       position.x = newX;
       updateBounds()
     }.bind(this)
@@ -645,7 +736,26 @@ Perkogine.Rectangle = function(properties) {
   Object.defineProperty(this.position, 'y', {
     get: function() { return position.y; },
     set: function(newY) {
+      localPosition.y += newY - position.y;
       position.y = newY;
+      updateBounds()
+    }.bind(this)
+  });
+  
+  Object.defineProperty(this.localPosition, 'x', {
+    get: function() { return localPosition.x; },
+    set: function(newX) {
+      position.x += newX - localPosition.x;
+      localPosition.x = newX;
+      updateBounds()
+    }.bind(this)
+  });
+  
+  Object.defineProperty(this.localPosition, 'y', {
+    get: function() { return localPosition.y; },
+    set: function(newY) {
+      position.y += newY - localPosition.y;
+      localPosition.y = newY;
       updateBounds()
     }.bind(this)
   });
@@ -668,6 +778,7 @@ Perkogine.Ellipse = function(properties) {
   var width = properties.width || 0;
   var height = properties.height || 0;
   var position = this.position.clone();
+  var localPosition = this.localPosition.clone();
   
   var scope = this;
   function updateBounds() {
@@ -700,19 +811,39 @@ Perkogine.Ellipse = function(properties) {
   Object.defineProperty(this.position, 'x', {
     get: function() { return position.x; },
     set: function(newX) {
+      localPosition.x += newX - position.x;
       position.x = newX;
       updateBounds()
-    }.bind(this)
+    }
   });
   
   Object.defineProperty(this.position, 'y', {
     get: function() { return position.y; },
     set: function(newY) {
+      localPosition.y += newY - position.y;
       position.y = newY;
+      updateBounds()
+    }
+  });
+  updateBounds();
+  
+  Object.defineProperty(this.localPosition, 'x', {
+    get: function() { return localPosition.x; },
+    set: function(newX) {
+      position.x += newX - localPosition.x;
+      localPosition.x = newX;
       updateBounds()
     }.bind(this)
   });
-  updateBounds();
+  
+  Object.defineProperty(this.localPosition, 'y', {
+    get: function() { return localPosition.y; },
+    set: function(newY) {
+      position.y += newY - localPosition.y;
+      localPosition.y = newY;
+      updateBounds()
+    }.bind(this)
+  });
 }
 
 Perkogine.Ellipse.prototype = Object.create(Perkogine.Object.prototype);
@@ -735,6 +866,8 @@ Perkogine.Text = function(properties) {
   var fontSize = 16;
   var font = "Arial";
   var position = this.position.clone();
+  var localPosition = this.localPosition.clone();
+  
   Object.defineProperty(this, 'text', {
     get: function() {
       return text;
@@ -766,23 +899,39 @@ Perkogine.Text = function(properties) {
   });
   
   Object.defineProperty(this.position, 'x', {
-    get: function() {
-      return position.x;
-    },
+    get: function() { return position.x; },
     set: function(newX) {
+      localPosition.x += newX - position.x;
       position.x = newX;
-      updateParams();
+      updateParams()
     }
   });
   
   Object.defineProperty(this.position, 'y', {
-    get: function() {
-      return position.y;
-    },
+    get: function() { return position.y; },
     set: function(newY) {
+      localPosition.y += newY - position.Y;
       position.y = newY;
-      updateParams();
+      updateParams()
     }
+  });
+  
+  Object.defineProperty(this.localPosition, 'x', {
+    get: function() { return localPosition.x; },
+    set: function(newX) {
+      position.x += newX - localPosition.x;
+      localPosition.x = newX;
+      updateParams()
+    }.bind(this)
+  });
+  
+  Object.defineProperty(this.localPosition, 'y', {
+    get: function() { return localPosition.y; },
+    set: function(newY) {
+      position.y += newY - localPosition.y;
+      localPosition.y = newY;
+      updateParams()
+    }.bind(this)
   });
   
   font = properties.font || "Arial";
@@ -936,6 +1085,87 @@ Perkogine.Line.prototype.rotateAround = function(origin, angle) {
   this.end.y = Math.cos(angle) * (pointEnd.y - origin.y) + Math.sin(angle) * (pointEnd.x - origin.x) + origin.y;
   
   return this;
+}
+Perkogine.Image = function(properties) {
+  Perkogine.Object.call(this, properties);
+  
+  this.image = properties.image || new Image();
+  this.texture = null;
+  this.color = '#FFFFFF';
+  
+  var position = this.position.clone();
+  var localPosition = this.localPosition.clone();
+  var width = this.image.width;
+  var height = this.image.height;
+  
+  var scope = this;
+  function updateBounds() {
+    scope.bounds = {
+      left: position.x - scope.width / 2,
+      right: position.x + scope.width / 2,
+      top: position.y - scope.height / 2,
+      bottom: position.y + scope.height / 2
+    };
+  }
+  
+  Object.defineProperty(this, 'width', {
+    get: function() { return width; },
+    set: function(newWidth) {
+      width = newWidth;
+      updateBounds();
+    }
+  });
+  
+  Object.defineProperty(this, 'height', {
+    get: function() { return height; },
+    set: function(newHeight) {
+      height = newHeight;
+      updateBounds();
+    }
+  });
+  
+  Object.defineProperty(this.position, 'x', {
+    get: function() { return position.x; },
+    set: function(newX) {
+      localPosition.x += newX - position.x;
+      position.x = newX;
+      updateBounds()
+    }
+  });
+  
+  Object.defineProperty(this.position, 'y', {
+    get: function() { return position.y; },
+    set: function(newY) {
+      localPosition.y += newY - position.y;
+      position.y = newY;
+      updateBounds()
+    }
+  });
+  
+  Object.defineProperty(this.localPosition, 'x', {
+    get: function() { return localPosition.x; },
+    set: function(newX) {
+      position.x += newX - localPosition.x;
+      localPosition.x = newX;
+      updateBounds();
+    }
+  });
+  
+  Object.defineProperty(this.localPosition, 'y', {
+    get: function() { return localPosition.y; },
+    set: function(newY) {
+      position.y += newY - localPosition.y;
+      localPosition.y = newY;
+      updateBounds();
+    }
+  });
+}
+
+Perkogine.Image.prototype = Object.create(Perkogine.Object.prototype);
+Perkogine.Image.prototype.constructor = Perkogine.Image;
+
+Perkogine.Image.prototype.clone = function() {
+  return new this.constructor(this).copy(this);
 }
 Perkogine.CountManager = function(count, callback) {
   this.count = count;

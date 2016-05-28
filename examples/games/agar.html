@@ -63,8 +63,8 @@
         text: 'Perkovec',
         layer: 2
       });
-      
       player.Add(nickname);
+      nickname.localPosition.set(0,0);
       
       scene.Add(player);
       
@@ -148,6 +148,7 @@
       }
       
       function checkEnemy() {
+        
         for (var i = 0; i < enemies.length; ++i) {
           var dist = enemies[i].position.distanceTo(player.position);
           if (dist < radius){
@@ -163,7 +164,6 @@
         
         var x = getRandom(0, renderer.width);
         var y = getRandom(0, renderer.height);
-        
         var enemy = new Perkogine.Circle({
           radius: 7,
           color: colors[getRandomInt(0, 6)]
@@ -172,6 +172,7 @@
         
         enemies.push(enemy);
         scene.Add(enemy);
+        
       }
       
       function getRandom(min, max) {

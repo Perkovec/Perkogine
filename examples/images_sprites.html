@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Perkogine - Textured shapes</title>
+    <meta charset="UTF-8"/>
+    <style>
+      * {
+        margin: 0 auto;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="../build/perkogine-dev.js"></script>
+    
+    <script>
+      var assets = new Perkogine.AssetsManager();
+      assets.loadImages([
+        { name: 'background', source: 'http://opengameart.org/sites/default/files/airadventurelevel4.png' }
+      ], init);
+      
+      function init() {
+        var renderer = new Perkogine.Renderer({
+          width: window.innerWidth,
+          height: window.innerHeight
+        });
+        
+        var scene = new Perkogine.Scene();
+      
+        var bg = new Perkogine.Image({
+          image: assets.assets['background'],
+          pivot: new Perkogine.Vector2D()
+        });
+        var ratio = bg.height / bg.width;
+        bg.width = renderer.width;
+        bg.height = bg.width * ratio;
+        
+        scene.Add(bg);
+        
+        var centerPoint = new Perkogine.Vector2D(renderer.width / 2, renderer.height / 2);
+      
+        function update() {
+          requestAnimationFrame(update);
+        
+              
+          renderer.clear();
+          renderer.Render(scene);
+        }
+        update();
+      }
+    </script>
+  </body>
+</html>
