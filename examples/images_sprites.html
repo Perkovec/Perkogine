@@ -16,13 +16,14 @@
     <script>
       var assets = new Perkogine.AssetsManager();
       assets.loadImages([
-        { name: 'background', source: 'http://opengameart.org/sites/default/files/airadventurelevel4.png' }
+        { name: 'background', source: 'http://i.imgur.com/sHvNJ9S.png' },
+        { name: 'sheet', source: 'http://i.imgur.com/DjZ14DR.png' }
       ], init);
       
       function init() {
         var renderer = new Perkogine.Renderer({
-          width: window.innerWidth,
-          height: window.innerHeight
+          width: 800,
+          height: 600
         });
         
         var scene = new Perkogine.Scene();
@@ -35,14 +36,36 @@
         bg.width = renderer.width;
         bg.height = bg.width * ratio;
         
+        var tiger = new Perkogine.Sprite({
+          image: assets.assets['sheet'],
+          sheetData: {
+            width: 512,
+            height: 256,
+            numFrames: 8
+          },
+          sequenceData: {
+            normalRun: {
+              start: 1,
+              count: 8,
+              time: 800
+            }
+          }
+        });
+        tiger.width = 512;
+        tiger.height = 256;
+        tiger.position.set(400, 300);
+        tiger.run('normalRun');
+        
         scene.Add(bg);
+        scene.Add(tiger);
         
         var centerPoint = new Perkogine.Vector2D(renderer.width / 2, renderer.height / 2);
       
         function update() {
           requestAnimationFrame(update);
-        
-              
+          
+          
+          
           renderer.clear();
           renderer.Render(scene);
         }
