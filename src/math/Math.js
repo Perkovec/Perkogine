@@ -20,4 +20,4 @@ Perkogine.Math.UUID = function (){
 			}
 			return uuid.join('');
 		};
-}
+}();

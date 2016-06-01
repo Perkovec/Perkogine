@@ -1,8 +1,8 @@
 Perkogine.Text = function(properties) {
   Perkogine.Object.call(this, properties);
   
-  this.color = properties.color || '#000000';
-  this.borderColor = properties.borderColor || '#FFFFFF';
+  this.color = properties.color || new Perkogine.Color('#000');
+  this.borderColor = properties.borderColor || new Perkogine.Color();
   this.borderWidth = properties.borderWidth || 0;
   this.texture = properties.texture || null;
   

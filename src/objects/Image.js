@@ -3,7 +3,7 @@ Perkogine.Image = function(properties) {
   
   this.image = properties.image || new Image();
   this.texture = null;
-  this.color = '#FFFFFF';
+  this.color = new Perkogine.Color();
   
   var position = this.position.clone();
   var localPosition = this.localPosition.clone();

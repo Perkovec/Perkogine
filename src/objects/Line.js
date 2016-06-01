@@ -1,7 +1,8 @@
 Perkogine.Line = function(properties) {
   Perkogine.Object.call(this, properties);
   
-  this.borderColor = properties.borderColor || '#000000';
+  this.borderColor = properties.borderColor || new Perkogine.Color('#000');
+  this.color = new Perkogine.Color();
   this.borderWidth = properties.borderWidth || 1;
   this.texture = properties.texture || null;
   this.start = properties.start || new Perkogine.Vector2D();

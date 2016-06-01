@@ -1,8 +1,8 @@
 Perkogine.Rectangle = function(properties) {
   Perkogine.Object.call(this, properties);
   
-  this.color = properties.color || '#FFFFFF';
-  this.borderColor = properties.borderColor || '#FFFFFF';
+  this.color = properties.color || new Perkogine.Color();
+  this.borderColor = properties.borderColor || new Perkogine.Color();
   this.borderWidth = properties.borderWidth || 0;
   this.texture = properties.texture || null;
   

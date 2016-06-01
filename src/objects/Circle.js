@@ -1,8 +1,8 @@
 Perkogine.Circle = function(properties) {
   Perkogine.Object.call(this, properties);
   
-  this.color = properties.color || '#FFFFFF';
-  this.borderColor = properties.borderColor || '#FFFFFF';
+  this.color = properties.color || new Perkogine.Color();
+  this.borderColor = properties.borderColor || new Perkogine.Color();
   this.borderWidth = properties.borderWidth || 0;
   this.texture = properties.texture || null;
   
@@ -18,54 +18,66 @@ Perkogine.Circle = function(properties) {
       top: position.y - radius,
       bottom: position.y + radius
     };
-    scope.width = scope.height = radius * 2;
+  }
+  
+  function updateYBounds() {
+    scope.bounds.top = position.y - radius;
+    scope.bounds.bottom = position.y + radius;
+  }
+  
+  function updateXBounds() {
+    scope.bounds.left = position.x - radius;
+    scope.bounds.right = position.x + radius;
   }
   
   Object.defineProperty(this, 'radius', {
     get: function() { return radius; },
     set: function(newRadius) {
-      this.width = newRadius * 2;
-      this.height = newRadius * 2;
+      this.width = this.height = newRadius << 1;
       radius = newRadius;
-      updateBounds();
+      updateYBounds();
+      updateXBounds();
     }
   });
   
-  Object.defineProperty(this.position, 'x', {
-    get: function() { return position.x; },
-    set: function(newX) {
-      localPosition.x += newX - position.x;
-      position.x = newX;
-      updateBounds()
+  Object.defineProperties(this.position, {
+    x: {
+      get: function() { return position.x; },
+      set: function(newX) {
+        localPosition.x += newX - position.x;
+        position.x = newX;
+        updateXBounds();
+      }
+    },
+    y: {
+      get: function() { return position.y; },
+      set: function(newY) {
+        localPosition.y += newY - position.y;
+        position.y = newY;
+        updateYBounds();
+      }
     }
   });
   
-  Object.defineProperty(this.position, 'y', {
-    get: function() { return position.y; },
-    set: function(newY) {
-      localPosition.y += newY - position.y;
-      position.y = newY;
-      updateBounds()
+  Object.defineProperties(this.localPosition, {
+    x: {
+      get: function() { return localPosition.x; },
+      set: function(newX) {
+        position.x += newX - localPosition.x;
+        localPosition.x = newX;
+        updateXBounds();
+      }
+    },
+    y: {
+      get: function() { return localPosition.y; },
+      set: function(newY) {
+        position.y += newY - localPosition.y;
+        localPosition.y = newY;
+        updateYBounds();
+      }
     }
   });
   
-  Object.defineProperty(this.localPosition, 'x', {
-    get: function() { return localPosition.x; },
-    set: function(newX) {
-      position.x += newX - localPosition.x;
-      localPosition.x = newX;
-      updateBounds();
-    }
-  });
-  
-  Object.defineProperty(this.localPosition, 'y', {
-    get: function() { return localPosition.y; },
-    set: function(newY) {
-      position.y += newY - localPosition.y;
-      localPosition.y = newY;
-      updateBounds();
-    }
-  });
 }
 
 Perkogine.Circle.prototype = Object.create(Perkogine.Object.prototype);

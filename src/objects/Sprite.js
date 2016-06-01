@@ -6,7 +6,7 @@ Perkogine.Sprite = function(properties) {
   this._sequenceData = properties.sequenceData || {};
   
   this.texture = null;
-  this.color = '#FFFFFF';
+  this.color = new Perkogine.Color();
   
   var position = this.position.clone();
   var localPosition = this.localPosition.clone();

@@ -1,5 +1,7 @@
 Perkogine.Scene = function() {
   this.objects = [];
+  this.rotation = 0;
+  this.position = new Perkogine.Vector2D();
 }
 
 Perkogine.Scene.prototype.Add = function(object) {
