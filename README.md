@@ -2,7 +2,7 @@
 ## JavaScript 2D game engine
 Perkogine - lightweight canvas library for build 2D games.
 
-[Wiki](wiki) - [Migrating](wiki/Migrating)
+[Wiki](https://github.com/Perkovec/Perkogine/wiki) - [Migrating](https://github.com/Perkovec/Perkogine/wiki/Migrating)
 # Usage
 Download the latest release and include it in your html.
 ```html
