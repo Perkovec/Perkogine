@@ -175,9 +175,109 @@ Perkogine.Math.UUID = function (){
 			}
 			return uuid.join('');
 		};
+}();
+Perkogine.Utils = {};
+Perkogine.Utils.oneArray = function(somearr) {
+  var nArr = [];
+  var len = somearr.length;
+  for (var i = 0; i < len; i++){
+    if (somearr[i].children.length){
+      nArr = nArr.concat(Perkogine.Utils.oneArray(somearr[i].children));
+    }
+    nArr.push(somearr[i]);
+  }
+  return nArr;
+}
+Perkogine.Color = function(r, g, b) {
+  this.r = 1;
+  this.g = 1;
+  this.b = 1;
+  this.a = 1;
+  
+  this._regexRGB = /^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/g;
+  this._regexRGBA = /^rgba\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/g;
+  this._regexShortHEX = /^#([0-9a-fA-F]{3})$/g;
+  this._regexHEX = /^#([0-9a-fA-F]{6})$/g;
+  
+  if (g === undefined && b === undefined) return this.set(r);
+  
+  return this.setRGB(r, g, b);
+}
+
+Perkogine.Color.prototype.set = function(val) {
+  if (val instanceof Perkogine.Color) {
+    this.copy(val);
+  } else if (typeof val == 'number') {
+    this.setHex(val);
+  } else if (typeof val == 'string'){
+    this.setFromStyle(val);
+  }
+  
+  return this;
+}
+
+Perkogine.Color.prototype.setRGB = function(r, g, b) {
+  this.r = r;
+  this.g = g;
+  this.b = b;
+  
+  return this;
+}
+
+Perkogine.Color.prototype.setHex = function(hex) {
+  hex = Math.floor(hex);
+
+	this.r = (hex >> 16 & 255) / 255;
+	this.g = (hex >> 8 & 255) / 255;
+	this.b = (hex & 255) / 255;
+
+	return this;
+}
+
+Perkogine.Color.prototype.setFromStyle = function(val) {
+  var RGBMatch = this._regexRGB.exec(val);
+  var RGBAMatch = this._regexRGBA.exec(val);
+  var ShortHEXMatch = this._regexShortHEX.exec(val);
+  var HEXMatch = this._regexHEX.exec(val);
+  
+  if (RGBMatch !== null) {
+    this.r = RGBMatch[1];
+    this.g = RGBMatch[2];
+    this.b = RGBMatch[3];
+    this.a = 1;
+  } else if (RGBAMatch !== null) {
+    this.r = RGBAMatch[1];
+    this.g = RGBAMatch[2];
+    this.b = RGBAMatch[3];
+    this.a = RGBAMatch[4];
+  } else if (ShortHEXMatch !== null) {
+    var mch = ShortHEXMatch[1];
+    this.r = parseInt(mch.charAt(0), 16) * 0x11 / 255;
+    this.g = parseInt(mch.charAt(1), 16) * 0x11;
+    this.b = parseInt(mch.charAt(2), 16) * 0x11;
+    this.a = 1;
+  } else if (HEXMatch !== null){
+    var mch = HEXMatch[1];
+    this.r = parseInt(mch.substr(0,2),16) / 255;
+    this.g = parseInt(mch.substr(2,2),16) / 255;
+    this.b = parseInt(mch.substr(4,2),16) / 255;
+    this.a = 1;
+  }
+  
+  return this;
+}
+
+Perkogine.Color.prototype.getHEX = function() {
+  return (this.r * 255) << 16 ^ (this.g * 255) << 8 ^ (this.b * 255) << 0;
+}
+
+Perkogine.Color.prototype.getHEXString = function() {
+  return ('000000' + this.getHEX().toString(16)).slice(-6);
 }
 Perkogine.Scene = function() {
   this.objects = [];
+  this.rotation = 0;
+  this.position = new Perkogine.Vector2D();
 }
 
 Perkogine.Scene.prototype.Add = function(object) {
@@ -201,7 +301,7 @@ Perkogine.Renderer = function(properties) {
   this.parent = properties.parent || document.body;
   this.width = properties.width || 500;
   this.height = properties.height || 500;
-  this.clearColor = properties.clearColor || "#FFFFFF";
+  this.clearColor = properties.clearColor || new Perkogine.Color();
   
   var domElement = document.createElement('canvas');
   domElement.width = this.width;
@@ -217,7 +317,7 @@ Perkogine.Renderer = function(properties) {
 }
 
 Perkogine.Renderer.prototype.clear = function() {
-  this._ctx.fillStyle = this.clearColor; 
+  this._ctx.fillStyle = '#' + this.clearColor.getHEXString(); 
   this._ctx.fillRect(0, 0, this.width, this.height);
 }
 
@@ -243,171 +343,162 @@ Perkogine.Renderer.prototype.enableLockPointer = function(onlock, onunlock) {
   }
 }
 
+Perkogine.Renderer._objectsFilter = function(object) {
+  return object.visible || 
+        !(object.bounds.right < 0 || 
+         object.bounds.left > scope.width || 
+         object.bounds.bottom < 0 || 
+         object.bounds.top > scope.height);
+}
+  
+Perkogine.Renderer._sortLayers = function(a, b) {
+  if (a.layer < b.layer) return -1;
+  else if (a.layer > b.layer) return 1;
+  else return 0;
+}
+
+Perkogine.Renderer.DrawObject = function(ctx, object, drawFunction, ownPos) {
+  ownPos = ownPos || false;
+  ctx.beginPath();
+  ctx.save();
+    
+  if (!ownPos){
+    var parentPos = object.parent.position;
+    var parentRot = object.parent.rotation;
+    var distance = Math.sqrt(object.localPosition.x * object.localPosition.x + object.localPosition.y * object.localPosition.y);
+    var angle = Math.asin(distance == 0 ? 0 : object.localPosition.y / distance) + parentRot * Perkogine.Deg2Rad;
+    var posX = parentPos.x + Math.cos(angle) * distance;
+    var posY = parentPos.y + Math.sin(angle) * distance;
+    ctx.translate(posX, posY);
+    ctx.rotate(Perkogine.Deg2Rad * object.rotation);
+  }
+    
+  drawFunction();
+    
+  Perkogine.Renderer.fillAndStroke(ctx, object);
+  ctx.restore();
+}
+
+Perkogine.Renderer.DrawCircle = function(ctx, object) {
+  Perkogine.Renderer.DrawObject(ctx, object, function() {
+    ctx.arc(object.width * (object.pivot.x - 0.5), object.width * (object.pivot.y - 0.5), 
+            object.radius * object.scale, 0, Math.PI * 2, false);
+  });
+}
+
+Perkogine.Renderer.DrawRectangle = function(ctx, object) {
+  Perkogine.Renderer.DrawObject(ctx, object, function() {
+    ctx.rect(-object.width * object.pivot.x, -object.height * object.pivot.y, object.width, object.height);
+  });
+}
+
+Perkogine.Renderer.DrawEllipse = function(ctx, object) {
+  Perkogine.Renderer.DrawObject(ctx, object, function() {
+    ctx.ellipse(object.width * (object.pivot.x - 0.5), object.height * (object.pivot.y - 0.5),
+                object.width / 2, object.height / 2,
+                0,
+                0, 2 * Math.PI);
+  });
+}
+
+Perkogine.Renderer.DrawPathShape = function(ctx, object) {
+  var points = object.points;
+  if (!points.length) return;
+  
+  Perkogine.Renderer.DrawObject(ctx, object, function() {
+    ctx.moveTo(points[0].x, points[0].y);
+    for (var i = 1; i < points.length; ++i) {
+      ctx.lineTo(points[i].x, points[i].y);
+    }
+    ctx.closePath();
+  });
+}
+
+Perkogine.Renderer.DrawText = function(ctx, object) {
+  ctx.beginPath();
+  ctx.save();
+    
+  var parentPos = object.parent.position;
+  var parentRot = object.parent.rotation;
+  var distance = Math.sqrt(object.localPosition.x * object.localPosition.x + object.localPosition.y * object.localPosition.y);
+  var angle = (Math.asin(object.localPosition.y * (distance == 0 ? 0 : 1 / distance ) ) + parentRot) * Perkogine.Deg2Rad;
+  var posX = parentPos.x + Math.cos(angle) * distance;
+  var posY = parentPos.y + Math.sin(angle) * distance;
+  ctx.translate(posX, 
+                posY);
+  ctx.rotate(Perkogine.Deg2Rad * (object.rotation + parentRot));
+      
+  ctx.font = object.fontSize + "px " + object.font;
+  ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : '#' + object.color.getHEXString();
+  ctx.strokeStyle = '#' + object.borderColor.getHEXString();
+  ctx.strokeWidth = object.borderWidth;
+    
+  ctx.fillText(object.text, -object.width * object.pivot.x, object.height * object.pivot.y );
+  ctx.restore();
+}
+
+Perkogine.Renderer.DrawLine = function(ctx, object) {
+  Perkogine.Renderer.DrawObject(ctx, object, function() {
+    ctx.translate(object.bounds.left + object.width / 2, 
+                  object.bounds.top + object.height / 2);
+    ctx.rotate(Perkogine.Deg2Rad * object.rotation);
+                    
+    ctx.moveTo(-object.width / 2, -object.height / 2 + 0.5);
+    ctx.lineTo(object.width / 2, object.height / 2 + 0.5);
+  }, true);
+}
+
+Perkogine.Renderer.DrawImage = function(ctx, object) {
+  Perkogine.Renderer.DrawObject(ctx, object, function() {
+    ctx.drawImage(object.image, -object.width * object.pivot.x, -object.height * object.pivot.y, object.width, object.height);
+  });
+}
+
+Perkogine.Renderer.DrawSprite = function(ctx, object) {
+  Perkogine.Renderer.DrawObject(ctx, object, function() {
+    ctx.drawImage(object.frames[object._currentFrame], -object.width * object.pivot.x, -object.height * object.pivot.y, object.width, object.height);
+  });
+}
+
+Perkogine.Renderer.fillAndStroke = function(ctx, object) {
+  ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : '#' + object.color.getHEXString();
+  ctx.fill();
+  ctx.strokeStyle = '#' + object.borderColor.getHEXString();
+  ctx.lineWidth = object.borderWidth;
+  if (object.borderWidth > 0) ctx.stroke();
+}
+
 Perkogine.Renderer.prototype.Render = function(scene) {
   var ctx = this._ctx;
   
-  function oneArray(somearr){
-    var nArr = [];
-    for (var i = 0; i < somearr.length; i++){
-      if (somearr[i].children.length > 0){
-        nArr = nArr.concat(oneArray(somearr[i].children));
-      }
-      nArr.push(somearr[i]);
-    }
-    return nArr;
-  }
+  var objects = Perkogine.Utils.oneArray(scene.objects);
   
-  var objects = oneArray(scene.objects);
+  objects = objects.filter(Perkogine.Renderer._objectsFilter);
   
-  objects = objects.filter(function(object) {
-    return object.visible;
-  });
+  objects.sort(Perkogine.Renderer._sortLayers);
   
-  objects.sort(function(a, b) {
-    if (a.layer < b.layer)
-      return -1;
-    else if (a.layer > b.layer)
-      return 1;
-    else 
-      return 0;
-  });
-  
-  for (var i = 0; i < objects.length; ++i) {
-    var object = objects[i];
+  var objCount = objects.length;
+  var object;
+  for (var i = 0; i < objCount; ++i) {
+    object = objects[i];
     
     if (object instanceof Perkogine.Circle) {
-      DrawCircle(object);
+      Perkogine.Renderer.DrawCircle(ctx, object);
     } else if (object instanceof Perkogine.Rectangle) {
-      DrawRectangle(object);
+      Perkogine.Renderer.DrawRectangle(ctx, object);
     } else if (object instanceof Perkogine.Ellipse) {
-      DrawEllipse(object);
+      Perkogine.Renderer.DrawEllipse(ctx, object);
     } else if (object instanceof Perkogine.PathShape) {
-      DrawPathShape(object);
+      Perkogine.Renderer.DrawPathShape(ctx, object);
     } else if (object instanceof Perkogine.Text) {
-      DrawText(object);
+      Perkogine.Renderer.DrawText(ctx, object);
     } else if (object instanceof Perkogine.Line) {
-      DrawLine(object);
+      Perkogine.Renderer.DrawLine(ctx, object);
     } else if (object instanceof Perkogine.Image) {
-      DrawImage(object);
+      Perkogine.Renderer.DrawImage(ctx, object);
     } else if (object instanceof Perkogine.Sprite) {
-      DrawSprite(object);
+      Perkogine.Renderer.DrawSprite(ctx, object);
     }
-  }
-  
-  function DrawObject(object, drawFunction, ownPos) {
-    ownPos = ownPos || false;
-    ctx.beginPath();
-    ctx.save();
-    
-    if (!ownPos){
-      var parentPos = object.parent instanceof Perkogine.Object ? object.parent.position : new Perkogine.Vector2D();
-      var parentRot = object.parent instanceof Perkogine.Object ? object.parent.rotation : 0;
-      var distance = Math.sqrt(object.localPosition.x * object.localPosition.x + object.localPosition.y * object.localPosition.y);
-      var angle = Math.asin(distance == 0 ? 0 : object.localPosition.y / distance) + parentRot * Perkogine.Deg2Rad;
-      var posX = parentPos.x + Math.cos(angle) * distance;
-      var posY = parentPos.y + Math.sin(angle) * distance;
-      //console.log(distance == 0 ? 0 : object.localPosition.y / distance)
-      ctx.translate(posX, 
-                    posY);
-      ctx.rotate(Perkogine.Deg2Rad * object.rotation);
-    }
-    
-    drawFunction();
-    
-    fillAndStroke(object);
-    ctx.restore();
-  }
-  
-  function DrawCircle(object) {
-    DrawObject(object, function() {
-      ctx.arc(object.width * (object.pivot.x - 0.5), object.width * (object.pivot.y - 0.5), 
-              object.radius * object.scale, 0, Math.PI * 2, false);
-    });
-  }
-  
-  function DrawRectangle(object) {
-    DrawObject(object, function() {
-      ctx.rect(-object.width * object.pivot.x, -object.height * object.pivot.y, object.width, object.height);
-    });
-  }
-  
-  function DrawEllipse(object) {
-    DrawObject(object, function() {
-      ctx.ellipse(object.width * (object.pivot.x - 0.5), object.height * (object.pivot.y - 0.5),
-                  object.width / 2, object.height / 2,
-                  0,
-                  0, 2 * Math.PI);
-    });
-  }
-  
-  function DrawPathShape(object) {
-    var points = object.points;
-    if (!points.length)
-      return;
-      
-    DrawObject(object, function() {
-      ctx.moveTo(points[0].x, points[0].y);
-      for (var i = 1; i < points.length; ++i) {
-        ctx.lineTo(points[i].x, points[i].y);
-      }
-      ctx.closePath();
-    });
-  }
-  
-  function DrawText(object) {
-    ctx.beginPath();
-    ctx.save();
-    
-    var parentPos = object.parent instanceof Perkogine.Object ? object.parent.position : new Perkogine.Vector2D();
-    var parentRot = object.parent instanceof Perkogine.Object ? object.parent.rotation : 0;
-    var deltaPos = object.position.clone().sub(object.localPosition);
-    var distance = Math.sqrt(object.localPosition.x * object.localPosition.x + object.localPosition.y * object.localPosition.y);
-    
-    var angle = (Math.asin(object.localPosition.y * (distance == 0 ? 0 : 1 / distance ) ) + parentRot) * Perkogine.Deg2Rad;
-    var posX = parentPos.x + Math.cos(angle) * distance;
-    var posY = parentPos.y + Math.sin(angle) * distance;
-    ctx.translate(posX, 
-                  posY);
-    ctx.rotate(Perkogine.Deg2Rad * (object.rotation + parentRot));
-      
-    ctx.font = object.fontSize + "px " + object.font;
-    ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
-    ctx.strokeStyle = object.borderColor;
-    ctx.strokeWidth = object.borderWidth;
-    
-    ctx.fillText(object.text, -object.width * object.pivot.x, object.height * object.pivot.y );
-    ctx.restore();
-  }
-  
-  function DrawLine(object) {
-    DrawObject(object, function() {
-      ctx.translate(object.bounds.left + object.width / 2, 
-                    object.bounds.top + object.height / 2);
-      ctx.rotate(Perkogine.Deg2Rad * object.rotation);
-                    
-      ctx.moveTo(-object.width / 2, -object.height / 2 + 0.5);
-      ctx.lineTo(object.width / 2, object.height / 2 + 0.5);
-    }, true);
-  }
-  
-  function DrawImage(object) {
-    DrawObject(object, function() {
-      ctx.drawImage(object.image, -object.width * object.pivot.x, -object.height * object.pivot.y, object.width, object.height);
-    });
-  }
-  
-  function DrawSprite(object) {
-    DrawObject(object, function() {
-      ctx.drawImage(object.frames[object._currentFrame], -object.width * object.pivot.x, -object.height * object.pivot.y, object.width, object.height);
-    });
-  }
-  
-  function fillAndStroke(object) {
-    ctx.fillStyle = (object.texture !== null) ? ctx.createPattern(object.texture, 'repeat') : object.color;
-    ctx.fill();
-    ctx.strokeStyle = object.borderColor;
-    ctx.lineWidth = object.borderWidth;
-    if (object.borderWidth > 0) ctx.stroke();
   }
 }
 Perkogine.Object = function(properties) {
@@ -486,8 +577,8 @@ Perkogine.Object.prototype.clone = function() {
 Perkogine.PathShape = function(properties) {
   Perkogine.Object.call(this, properties);
   
-  this.color = properties.color || '#FFFFFF';
-  this.borderColor = properties.borderColor || '#FFFFFF';
+  this.color = properties.color || new Perkogine.Color();
+  this.borderColor = properties.borderColor || new Perkogine.Color();
   this.borderWidth = properties.borderWidth || 0;
   this.texture = properties.texture || null;
   
@@ -618,8 +709,8 @@ Perkogine.PathShape.prototype.clone = function() {
 Perkogine.Circle = function(properties) {
   Perkogine.Object.call(this, properties);
   
-  this.color = properties.color || '#FFFFFF';
-  this.borderColor = properties.borderColor || '#FFFFFF';
+  this.color = properties.color || new Perkogine.Color();
+  this.borderColor = properties.borderColor || new Perkogine.Color();
   this.borderWidth = properties.borderWidth || 0;
   this.texture = properties.texture || null;
   
@@ -635,54 +726,66 @@ Perkogine.Circle = function(properties) {
       top: position.y - radius,
       bottom: position.y + radius
     };
-    scope.width = scope.height = radius * 2;
+  }
+  
+  function updateYBounds() {
+    scope.bounds.top = position.y - radius;
+    scope.bounds.bottom = position.y + radius;
+  }
+  
+  function updateXBounds() {
+    scope.bounds.left = position.x - radius;
+    scope.bounds.right = position.x + radius;
   }
   
   Object.defineProperty(this, 'radius', {
     get: function() { return radius; },
     set: function(newRadius) {
-      this.width = newRadius * 2;
-      this.height = newRadius * 2;
+      this.width = this.height = newRadius << 1;
       radius = newRadius;
-      updateBounds();
+      updateYBounds();
+      updateXBounds();
     }
   });
   
-  Object.defineProperty(this.position, 'x', {
-    get: function() { return position.x; },
-    set: function(newX) {
-      localPosition.x += newX - position.x;
-      position.x = newX;
-      updateBounds()
+  Object.defineProperties(this.position, {
+    x: {
+      get: function() { return position.x; },
+      set: function(newX) {
+        localPosition.x += newX - position.x;
+        position.x = newX;
+        updateXBounds();
+      }
+    },
+    y: {
+      get: function() { return position.y; },
+      set: function(newY) {
+        localPosition.y += newY - position.y;
+        position.y = newY;
+        updateYBounds();
+      }
     }
   });
   
-  Object.defineProperty(this.position, 'y', {
-    get: function() { return position.y; },
-    set: function(newY) {
-      localPosition.y += newY - position.y;
-      position.y = newY;
-      updateBounds()
+  Object.defineProperties(this.localPosition, {
+    x: {
+      get: function() { return localPosition.x; },
+      set: function(newX) {
+        position.x += newX - localPosition.x;
+        localPosition.x = newX;
+        updateXBounds();
+      }
+    },
+    y: {
+      get: function() { return localPosition.y; },
+      set: function(newY) {
+        position.y += newY - localPosition.y;
+        localPosition.y = newY;
+        updateYBounds();
+      }
     }
   });
   
-  Object.defineProperty(this.localPosition, 'x', {
-    get: function() { return localPosition.x; },
-    set: function(newX) {
-      position.x += newX - localPosition.x;
-      localPosition.x = newX;
-      updateBounds();
-    }
-  });
-  
-  Object.defineProperty(this.localPosition, 'y', {
-    get: function() { return localPosition.y; },
-    set: function(newY) {
-      position.y += newY - localPosition.y;
-      localPosition.y = newY;
-      updateBounds();
-    }
-  });
 }
 
 Perkogine.Circle.prototype = Object.create(Perkogine.Object.prototype);
@@ -694,8 +797,8 @@ Perkogine.Circle.prototype.clone = function() {
 Perkogine.Rectangle = function(properties) {
   Perkogine.Object.call(this, properties);
   
-  this.color = properties.color || '#FFFFFF';
-  this.borderColor = properties.borderColor || '#FFFFFF';
+  this.color = properties.color || new Perkogine.Color();
+  this.borderColor = properties.borderColor || new Perkogine.Color();
   this.borderWidth = properties.borderWidth || 0;
   this.texture = properties.texture || null;
   
@@ -778,8 +881,8 @@ Perkogine.Rectangle.prototype.clone = function() {
 Perkogine.Ellipse = function(properties) {
   Perkogine.Object.call(this, properties);
   
-  this.color = properties.color || '#FFFFFF';
-  this.borderColor = properties.borderColor || '#FFFFFF';
+  this.color = properties.color || new Perkogine.Color();
+  this.borderColor = properties.borderColor || new Perkogine.Color();
   this.borderWidth = properties.borderWidth || 0;
   this.texture = properties.texture || null;
   
@@ -863,8 +966,8 @@ Perkogine.Ellipse.prototype.clone = function() {
 Perkogine.Text = function(properties) {
   Perkogine.Object.call(this, properties);
   
-  this.color = properties.color || '#000000';
-  this.borderColor = properties.borderColor || '#FFFFFF';
+  this.color = properties.color || new Perkogine.Color('#000');
+  this.borderColor = properties.borderColor || new Perkogine.Color();
   this.borderWidth = properties.borderWidth || 0;
   this.texture = properties.texture || null;
   
@@ -972,7 +1075,8 @@ Perkogine.Text.prototype.clone = function() {
 Perkogine.Line = function(properties) {
   Perkogine.Object.call(this, properties);
   
-  this.borderColor = properties.borderColor || '#000000';
+  this.borderColor = properties.borderColor || new Perkogine.Color('#000');
+  this.color = new Perkogine.Color();
   this.borderWidth = properties.borderWidth || 1;
   this.texture = properties.texture || null;
   this.start = properties.start || new Perkogine.Vector2D();
@@ -1099,7 +1203,7 @@ Perkogine.Image = function(properties) {
   
   this.image = properties.image || new Image();
   this.texture = null;
-  this.color = '#FFFFFF';
+  this.color = new Perkogine.Color();
   
   var position = this.position.clone();
   var localPosition = this.localPosition.clone();
@@ -1183,7 +1287,7 @@ Perkogine.Sprite = function(properties) {
   this._sequenceData = properties.sequenceData || {};
   
   this.texture = null;
-  this.color = '#FFFFFF';
+  this.color = new Perkogine.Color();
   
   var position = this.position.clone();
   var localPosition = this.localPosition.clone();

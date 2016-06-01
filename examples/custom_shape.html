@@ -9,9 +9,9 @@
     
     <script>
       init();
-      
+      var renderer;
       function init() {
-        var renderer = new Perkogine.Renderer();
+        renderer = new Perkogine.Renderer();
         
         var scene = new Perkogine.Scene();
         
@@ -35,8 +35,8 @@
         
         var shape = new Perkogine.PathShape({
           points: points,
-          color: 'orange',
-          borderColor: 'black',
+          color: new Perkogine.Color('#FFA500'),
+          borderColor: new Perkogine.Color('#000'),
           borderWidth: 2
         })
         shape.position.set(250, 250);

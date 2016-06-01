@@ -15,7 +15,7 @@
     
     <script>
       var renderer = new Perkogine.Renderer({
-        clearColor: '#F2FBFF',
+        clearColor: new Perkogine.Color('#F2FBFF'),
         width: window.innerWidth,
         height: window.innerHeight
       });
@@ -52,8 +52,8 @@
       
       var player = new Perkogine.PathShape({
         points: points,
-        color: '#3FFF07',
-        borderColor: '#38E506',
+        color: new Perkogine.Color('#3FFF07'),
+        borderColor: new Perkogine.Color('#38E506'),
         borderWidth: 5,
         layer: 1
       })
@@ -69,13 +69,13 @@
       scene.Add(player);
       
       var colors = [
-        '#FF0091',
-        '#00FF69',
-        '#FF4600',
-        '#00FFFD',
-        '#FFB700',
-        '#4100FF',
-        '#FEFF00'
+        new Perkogine.Color('#FF0091'),
+        new Perkogine.Color('#00FF69'),
+        new Perkogine.Color('#FF4600'),
+        new Perkogine.Color('#00FFFD'),
+        new Perkogine.Color('#FFB700'),
+        new Perkogine.Color('#4100FF'),
+        new Perkogine.Color('#FEFF00')
       ];
       
       var maxEnemyCount = 100;
