@@ -1,7 +1,8 @@
 # Perkogine
 ## JavaScript 2D game engine
 Perkogine - lightweight canvas library for build 2D games.
-[Wiki](wiki)
+
+[Wiki](wiki) - [Migrating](wiki/Migrating)
 # Usage
 Download the latest release and include it in your html.
 ```html
@@ -15,17 +16,17 @@ var scene = new Perkogine.Scene();
     
 var circle = new Perkogine.Circle({
     radius: 50,
-    color: 'green'
+    color: new Perkogine.Color('#00FF00')
 })
 var rectangle = new Perkogine.Rectangle({
     width: 100,
     height: 100,
-    color: 'black'
+    color: new Perkogine.Color('#000')
 });
 var ellipse1 = new Perkogine.Ellipse({
     width: 100,
     height: 50,
-    color: 'red'
+    color: new Perkogine.Color('#FF0000')
 });
 var ellipse2 = ellipse1.clone();
     
