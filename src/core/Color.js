@@ -62,15 +62,15 @@ Perkogine.Color.prototype.setFromStyle = function(val) {
     this.a = RGBAMatch[4];
   } else if (ShortHEXMatch !== null) {
     var mch = ShortHEXMatch[1];
-    this.r = parseInt(mch.charAt(0), 16) * 0x11;
+    this.r = parseInt(mch.charAt(0), 16) * 0x11 / 255;
     this.g = parseInt(mch.charAt(1), 16) * 0x11;
     this.b = parseInt(mch.charAt(2), 16) * 0x11;
     this.a = 1;
   } else if (HEXMatch !== null){
     var mch = HEXMatch[1];
-    this.r = parseInt(mch.substr(0,2),16);
-    this.g = parseInt(mch.substr(2,2),16);
-    this.b = parseInt(mch.substr(4,2),16);
+    this.r = parseInt(mch.substr(0,2),16) / 255;
+    this.g = parseInt(mch.substr(2,2),16) / 255;
+    this.b = parseInt(mch.substr(4,2),16) / 255;
     this.a = 1;
   }
   
@@ -78,9 +78,9 @@ Perkogine.Color.prototype.setFromStyle = function(val) {
 }
 
 Perkogine.Color.prototype.getHEX = function() {
-  return ( this.r * 255 ) << 16 ^ ( this.g * 255 ) << 8 ^ ( this.b * 255 ) << 0;
+  return (this.r * 255) << 16 ^ (this.g * 255) << 8 ^ (this.b * 255) << 0;
 }
 
 Perkogine.Color.prototype.getHEXString = function() {
-  return ( '000000' + this.getHEX().toString( 16 ) ).slice( - 6 );
+  return ('000000' + this.getHEX().toString(16)).slice(-6);
 }
