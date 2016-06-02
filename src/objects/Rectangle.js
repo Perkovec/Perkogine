@@ -1,10 +1,24 @@
 Perkogine.Rectangle = function(properties) {
   Perkogine.Object.call(this, properties);
   
+  properties = properties || {};
   this.color = properties.color || new Perkogine.Color();
   this.borderColor = properties.borderColor || new Perkogine.Color();
   this.borderWidth = properties.borderWidth || 0;
   this.texture = properties.texture || null;
+  
+  //EXPERIMENTAL
+  this.verticles = [
+     -0.5,  0.5, 
+      0.5,  0.5,
+      0.5, -0.5,
+      
+     -0.5,  0.5,
+      0.5, -0.5, 
+     -0.5, -0.5
+  ];
+  
+  this.matrix = mat4.create(); 
   
   var width = properties.width || 0;
   var height = properties.height || 0;

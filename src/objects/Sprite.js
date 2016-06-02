@@ -1,6 +1,7 @@
 Perkogine.Sprite = function(properties) {
   Perkogine.Object.call(this, properties);
   
+  properties = properties || {};
   this._image = properties.image || new Image();
   this._sheetData = properties.sheetData || {};
   this._sequenceData = properties.sequenceData || {};

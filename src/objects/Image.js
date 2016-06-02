@@ -1,6 +1,7 @@
 Perkogine.Image = function(properties) {
   Perkogine.Object.call(this, properties);
   
+  properties = properties || {};
   this.image = properties.image || new Image();
   this.texture = null;
   this.color = new Perkogine.Color();

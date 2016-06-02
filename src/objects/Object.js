@@ -1,4 +1,5 @@
 Perkogine.Object = function(properties) {
+  properties = properties || {};
   this.visible = properties.visible || true;
   this.position = properties.position || new Perkogine.Vector2D();
   this.localPosition = properties.position || new Perkogine.Vector2D();
