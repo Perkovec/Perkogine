@@ -10,3 +10,11 @@ Perkogine.Utils.oneArray = function(somearr) {
   }
   return nArr;
 }
+
+Perkogine.Utils.repeatArray = function(arr, count) {
+  var newArr = [];
+  for (var i = 0; i < count; ++i){
+    newArr = newArr.concat(arr);
+  }
+  return newArr;
+}

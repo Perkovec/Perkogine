@@ -84,3 +84,7 @@ Perkogine.Color.prototype.getHEX = function() {
 Perkogine.Color.prototype.getHEXString = function() {
   return ('000000' + this.getHEX().toString(16)).slice(-6);
 }
+
+Perkogine.Color.prototype.toArray = function() {
+  return [this.r, this.g, this.b, this.a];
+}

@@ -8,7 +8,7 @@ Perkogine.Rectangle = function(properties) {
   this.texture = properties.texture || null;
   
   //EXPERIMENTAL
-  this.verticles = [
+  this.vertices = [
      -0.5,  0.5, 
       0.5,  0.5,
       0.5, -0.5,

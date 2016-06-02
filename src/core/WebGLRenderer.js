@@ -1,140 +1,218 @@
 Perkogine.WebGLRenderer = function(properties) {
-  var gl = null;
-  if (this.type == 'webgl') {
-    try {
-      gl = domElement.getContext("webgl") || domElement.getContext("experimental-webgl");
-    } catch(e) {}
+  properties = properties || {};
+  this.parent = properties.parent || document.body;
+  this.width = properties.width || 500;
+  this.height = properties.height || 500;
+  this.clearColor = properties.clearColor || new Perkogine.Color();
+  this.projectionMatrix = mat4.create();
+  
+  var domElement = document.createElement('canvas');
+  domElement.width = this.width;
+  domElement.height = this.height;
+  this.parent.appendChild(domElement);
+  
+  var ctx;
+  try {
+        ctx = domElement.getContext("webgl") || domElement.getContext("experimental-webgl");
+  } catch(e) {}
+  
+  if (!ctx) {
+    alert("WebGL not supported.");
+    return;
+  } else {
+    ctx.viewportWidth = this.width;
+    ctx.viewportHeight = this.height;
     
-    if (!gl) {
-      alert("Unable to initialize WebGL. Use canvas renderer.");
-      gl = null;
-    } else {
-      gl.clearColor(0.0, 0.0, 0.0, 1.0);
-      gl.enable(gl.DEPTH_TEST);
-      gl.depthFunc(gl.LEQUAL);
-      gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-      gl.viewport(0, 0, this.width, this.height);
-    }
+    ctx.clearColor(
+      this.clearColor.r,
+      this.clearColor.g,
+      this.clearColor.b,
+      this.clearColor.a
+    );
+    ctx.clear(ctx.COLOR_BUFFER_BIT);
   }
   
-  function getShader(gl, str, type) {
-    var shader;
-    if (type == "x-shader/x-fragment") {
-      shader = gl.createShader(gl.FRAGMENT_SHADER);
-    } else if (type == "x-shader/x-vertex") {
-      shader = gl.createShader(gl.VERTEX_SHADER);
-    } else {
-      return null;
-    }
-
-    gl.shaderSource(shader, str);
-    gl.compileShader(shader);
-
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      alert(gl.getShaderInfoLog(shader));
-      return null;
-    }
-
-    return shader;
-  }
+  this.domElement = domElement;
+  this._ctx = ctx;
   
-  var shaderProgram;
+  this.initShaders();
+}
 
-  function initShaders() {
-    var fragmentShader = getShader(gl, 
-      'precision mediump float;' +
-      
-      'void main(void) {' +
-        'gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);' +
-      '}', 
-    'x-shader/x-fragment');
-        
-    var vertexShader = getShader(gl, 
-      'attribute vec3 aVertexPosition;'+
-      
-      'uniform mat4 uMVMatrix;' +
-      'uniform mat4 uPMatrix;' +
-      
-      'void main(void) {' +
-        'gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);' +
-      '}', 
-    'x-shader/x-vertex');
+Perkogine.WebGLRenderer.fragmentShader = 
+'varying lowp vec4 fColor;' +
+'void main(void) {' +
+  'gl_FragColor = fColor;' +
+'}';
 
-    shaderProgram = gl.createProgram();
-    gl.attachShader(shaderProgram, vertexShader);
-    gl.attachShader(shaderProgram, fragmentShader);
-    gl.linkProgram(shaderProgram);
-
-    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-      alert("Could not initialise shaders");
-    }
-
-    gl.useProgram(shaderProgram);
-
-    shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
-    gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
-
-    shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
-    shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
-  }
-    
-  var mvMatrix = mat4.create();
-  var pMatrix = mat4.create();
-  function setMatrixUniforms() {
-    gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
-    gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
-  }
-
-  var triangleVertexPositionBuffer;
-  var squareVertexPositionBuffer;
-  function initBuffers() {
-    triangleVertexPositionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
-    var vertices = [
-      0.0,  1.0,
-     -1.0, -1.0,
-      1.0, -1.0,
-    ];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-    triangleVertexPositionBuffer.itemSize = 2;
-    triangleVertexPositionBuffer.numItems = 3;
-
-    squareVertexPositionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexPositionBuffer);
-    vertices = [
-      1.0,  1.0,
-     -1.0,  1.0,
-      1.0, -1.0,
-     -1.0, -1.0,
-    ];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-    squareVertexPositionBuffer.itemSize = 2;
-    squareVertexPositionBuffer.numItems = 4;
-  }
-  
-  var scope = this;
-  function drawScene() {
-    gl.viewport(0, 0, scope.width, scope.height);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    mat4.perspective(45, scope.width / scope.height, 0.1, 100.0, pMatrix);
-
-    mat4.identity(mvMatrix);
-
-    mat4.translate(mvMatrix, [-1.5, 0.0, -7.0]);
-    gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, triangleVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    setMatrixUniforms();
-    gl.drawArrays(gl.TRIANGLES, 0, triangleVertexPositionBuffer.numItems);
-
-    mat4.translate(mvMatrix, [3.0, 0.0, 0.0]);
-    gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexPositionBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, squareVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    setMatrixUniforms();
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, squareVertexPositionBuffer.numItems);
-  }
+Perkogine.WebGLRenderer.vertexShader = 
+'attribute vec2 aVertexPosition;' +
+'uniform mat4 uMVMatrix;' +
+'uniform mat4 uPMatrix;' +
+'attribute vec4 fragmentColor;' +
+'varying lowp vec4 fColor;' +
+'void main(void) {' +
+  'gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 0.0, 1.0);' +
+  'fColor = fragmentColor;' +
+'}';
  
-  initShaders();
-  initBuffers();
-  drawScene();
+Perkogine.WebGLRenderer._objectsFilter = function(object) {
+  return object.visible || 
+        !(object.bounds.right < 0 || 
+         object.bounds.left > scope.width || 
+         object.bounds.bottom < 0 || 
+         object.bounds.top > scope.height);
+}
+  
+Perkogine.WebGLRenderer._sortLayers = function(a, b) {
+  if (a.layer < b.layer) return -1;
+  else if (a.layer > b.layer) return 1;
+  else return 0;
+}
+
+Perkogine.WebGLRenderer.prototype.initShaders = function() {
+  var ctx = this._ctx;
+  
+  function getShader(type) {
+    var shader = ctx.createShader(type);
+    
+    var source;
+    if (type == ctx.FRAGMENT_SHADER) {
+      source = Perkogine.WebGLRenderer.fragmentShader;
+    } else if (type == ctx.VERTEX_SHADER) {
+      source = Perkogine.WebGLRenderer.vertexShader;
+    }
+    
+    ctx.shaderSource(shader, source);
+    ctx.compileShader(shader);
+   
+    if (!ctx.getShaderParameter(shader, ctx.COMPILE_STATUS)) {
+        alert("Shader compilation error: " + ctx.getShaderInfoLog(shader));
+        ctx.deleteShader(shader);   
+        return null;
+    }
+    return shader;  
+  }
+  
+  var vertexShader = getShader(ctx.VERTEX_SHADER);
+  var fragmentShader = getShader(ctx.FRAGMENT_SHADER);
+  
+  this.shaderProgram = ctx.createProgram();
+  
+  ctx.attachShader(this.shaderProgram, vertexShader);
+  ctx.attachShader(this.shaderProgram, fragmentShader);
+  
+  ctx.linkProgram(this.shaderProgram);
+      
+  if (!ctx.getProgramParameter(this.shaderProgram, ctx.LINK_STATUS)) {
+    alert("Unable initialize shaders");
+  }
+      
+  ctx.useProgram(this.shaderProgram);
+  
+  this.shaderProgram.vertexPositionAttribute = ctx.getAttribLocation(this.shaderProgram, "aVertexPosition");
+  ctx.enableVertexAttribArray(this.shaderProgram.vertexPositionAttribute);
+  
+  this.shaderProgram.fragmentColor = ctx.getAttribLocation(this.shaderProgram, "fragmentColor");
+  ctx.enableVertexAttribArray(this.shaderProgram.fragmentColor);
+  
+  this.shaderProgram.MVMatrix = ctx.getUniformLocation(this.shaderProgram, "uMVMatrix");
+  this.shaderProgram.ProjMatrix = ctx.getUniformLocation(this.shaderProgram, "uPMatrix");
+}
+
+Perkogine.WebGLRenderer.setMatrixUniforms = function(context, object) {
+  var ctx = context._ctx;
+  ctx.uniformMatrix4fv(context.shaderProgram.ProjMatrix,false, context.projectionMatrix);
+  ctx.uniformMatrix4fv(context.shaderProgram.MVMatrix, false, object.matrix);  
+}
+
+Perkogine.WebGLRenderer.DrawRectangle = function(context, object) {
+  var ctx = context._ctx;
+  
+  var vertexBuffer = ctx.createBuffer();
+  ctx.bindBuffer(ctx.ARRAY_BUFFER, vertexBuffer);
+  ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(object.vertices), ctx.STATIC_DRAW);
+  vertexBuffer.itemSize = 2;
+  vertexBuffer.numberOfItems = object.vertices.length / vertexBuffer.itemSize;
+  ctx.vertexAttribPointer(context.shaderProgram.vertexPositionAttribute, 
+                         vertexBuffer.itemSize, ctx.FLOAT, false, 0, 0);
+               
+  var colorBuffer = ctx.createBuffer();
+  var colors = Perkogine.Utils.repeatArray(object.color.toArray(), vertexBuffer.numberOfItems);
+  ctx.bindBuffer(ctx.ARRAY_BUFFER, colorBuffer);
+  ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(colors), ctx.STATIC_DRAW);
+  ctx.vertexAttribPointer(context.shaderProgram.fragmentColor, 
+                         4, ctx.FLOAT, false, 0, 0);
+  
+  mat4.identity(object.matrix);
+  mat4.translate(object.matrix,object.matrix,[-ctx.viewportWidth / 2, ctx.viewportHeight / 2, -20.0]);
+  mat4.translate(object.matrix,object.matrix,[object.position.x, -object.position.y, 0]);
+  mat4.rotateZ(object.matrix, object.matrix, Perkogine.Deg2Rad * object.rotation);
+  mat4.scale(object.matrix, object.matrix, [
+    object.width,
+    object.height,
+    1
+  ]);
+  Perkogine.WebGLRenderer.setMatrixUniforms(context, object);
+  ctx.drawArrays(ctx.TRIANGLES, 0, 6);
+  
+  if (object.borderWidth > 0){
+    ctx.lineWidth(object.borderWidth);
+    
+    var lineBuffer = ctx.createBuffer();
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, lineBuffer);
+    var vertices = [
+      -0.5, -0.5,
+      -0.5,  0.5,
+      
+      -0.5,  0.5,
+       0.5,  0.5,
+      
+       0.5,  0.5,
+       0.5, -0.5,
+       
+       0.5, -0.5,
+      -0.5, -0.5
+    ];
+    ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(vertices), ctx.STATIC_DRAW);
+    lineBuffer.itemSize = 2;
+    lineBuffer.numberOfItems = vertices.length / lineBuffer.itemSize;
+    ctx.vertexAttribPointer(context.shaderProgram.vertexPositionAttribute, 
+                            lineBuffer.itemSize, ctx.FLOAT, false, 0, 0);
+                            
+    var borderColorBuffer = ctx.createBuffer();
+    var borderColors = Perkogine.Utils.repeatArray(object.borderColor.toArray(), lineBuffer.numberOfItems);
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, borderColorBuffer);
+    ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(borderColors), ctx.STATIC_DRAW);
+    ctx.vertexAttribPointer(context.shaderProgram.fragmentColor, 
+                            4, ctx.FLOAT, false, 0, 0);
+                                      
+    ctx.drawArrays(ctx.LINES, 0, 8);
+  }
+}
+
+Perkogine.WebGLRenderer.prototype.clear = function() {
+  this._ctx.clear(this._ctx.COLOR_BUFFER_BIT);
+}
+
+Perkogine.WebGLRenderer.prototype.Render = function(scene) {
+  var ctx = this._ctx;
+  
+  ctx.viewport(0, 0, ctx.viewportWidth, ctx.viewportHeight);
+  mat4.perspective(this.projectionMatrix, Math.atan(ctx.viewportHeight / 2 / 20) * 2, ctx.viewportWidth / ctx.viewportHeight, 0.1, 100.0);
+  
+  var objects = Perkogine.Utils.oneArray(scene.objects);
+  
+  objects = objects.filter(Perkogine.WebGLRenderer._objectsFilter);
+  
+  objects.sort(Perkogine.WebGLRenderer._sortLayers);
+  
+  var objCount = objects.length;
+  var object;
+  for (var i = 0; i < objCount; ++i) {
+    object = objects[i];
+    
+    if (object instanceof Perkogine.Rectangle) {
+      Perkogine.WebGLRenderer.DrawRectangle(this, object);
+    }
+  }
 }
