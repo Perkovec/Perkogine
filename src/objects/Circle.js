@@ -7,34 +7,44 @@ Perkogine.Circle = function(properties) {
   this.borderWidth = properties.borderWidth || 0;
   this.texture = properties.texture || null;
   
+  this.matrix = mat4.create();
+  this.vertices = [];
+  
   var position = this.position.clone();
   var radius = properties.radius || 0;
   var localPosition = this.localPosition.clone();
   
+  this.width = this.height = radius * 2;
+  
   var scope = this;
-  function updateBounds() {
-    scope.bounds = {
-      left: position.x - radius,
-      right: position.x + radius,
-      top: position.y - radius,
-      bottom: position.y + radius
-    };
+  function updateVerticles() {
+    var angle;
+    var pointCount = Math.max(radius, 50);
+    scope.vertices = [];
+    scope.vertices.push(0, 0);
+    for (var i = 0; i < pointCount+1; ++i) {
+      angle = 360 / pointCount * i * Perkogine.Deg2Rad;
+      scope.vertices.push(Math.cos(angle));
+      scope.vertices.push(Math.sin(angle))
+    }
   }
   
   function updateYBounds() {
     scope.bounds.top = position.y - radius;
     scope.bounds.bottom = position.y + radius;
+    updateVerticles();
   }
   
   function updateXBounds() {
     scope.bounds.left = position.x - radius;
     scope.bounds.right = position.x + radius;
+    updateVerticles();
   }
   
   Object.defineProperty(this, 'radius', {
     get: function() { return radius; },
     set: function(newRadius) {
-      this.width = this.height = newRadius << 1;
+      this.width = this.height = newRadius * 1;
       radius = newRadius;
       updateYBounds();
       updateXBounds();
