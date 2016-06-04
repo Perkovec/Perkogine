@@ -12,6 +12,9 @@ Perkogine.Ellipse = function(properties) {
   var position = this.position.clone();
   var localPosition = this.localPosition.clone();
   
+  this.matrix = mat4.create();
+  this.vertices = [];
+  
   var scope = this;
   function updateBounds() {
     scope.bounds = {
@@ -20,6 +23,19 @@ Perkogine.Ellipse = function(properties) {
       top: position.y - height / 2.0,
       bottom: position.y + height / 2.0
     };
+    updateVertices();
+  }
+  
+  function updateVertices() {
+    var angle;
+    var pointCount = Math.max(Math.max(scope.width, scope.height), 50);
+    scope.vertices = [];
+    scope.vertices.push(0, 0);
+    for (var i = 0; i < pointCount+1; ++i) {
+      angle = 360 / pointCount * i * Perkogine.Deg2Rad;
+      scope.vertices.push(Math.cos(angle));
+      scope.vertices.push(Math.sin(angle));
+    }
   }
   
   Object.defineProperty(this, 'width', {
