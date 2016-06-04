@@ -283,6 +283,8 @@ Perkogine.WebGLRenderer.prototype.Render = function(scene) {
       Perkogine.WebGLRenderer.DrawCircle(this, object);
     } else if (object instanceof Perkogine.Ellipse) {
       Perkogine.WebGLRenderer.DrawEllipse(this, object);
+    } else if (object instanceof Perkogine.PathShape) {
+      Perkogine.WebGLRenderer.DrawEllipse(this, object);
     }
   }
 }

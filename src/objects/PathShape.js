@@ -12,7 +12,35 @@ Perkogine.PathShape = function(properties) {
   var localPosition = this.localPosition.clone();
   var scope = this;
   
+  this.vertices = [];
+  this.matrix = mat4.create();
+  
+  function updateVertices() {
+    function findMaxVector() {
+      var maxVector = points[0].clone();
+      for (var i = 1; i < points.length; ++i) {
+        if (maxVector.length < points[i].length) maxVector = points[i].clone();
+      }
+      return maxVector;
+    }
+    
+    var maxVector = findMaxVector();
+    var ratio = 1 / maxVector.length();
+    
+    scope.vertices = [];
+    scope.vertices.push(0, 0);
+    for (var i = 0; i < points.length; ++i){
+      var point = points[i].clone();
+      point.multiplyScalar(ratio);
+      scope.vertices.push(point.x / 2, point.y / 2);
+    }
+    var point = points[0].clone();
+    point.multiplyScalar(ratio);
+    scope.vertices.push(point.x / 2, point.y / 2);
+  }
+  
   calculateParams();
+  updateDefines();
   Object.defineProperty(this, 'points', {
     set: function(newPoints) {
       points = newPoints;
@@ -122,7 +150,9 @@ Perkogine.PathShape = function(properties) {
     };
     scope.width = width;
     scope.height = height;
+    updateVertices();
   }
+  
 }
 
 Perkogine.PathShape.prototype = Object.create(Perkogine.Object.prototype);
