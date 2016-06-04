@@ -122,7 +122,7 @@ Perkogine.Vector2D.prototype.negate = function() {
 }
 
 Perkogine.Vector2D.prototype.length = function() {
-  return this.x * this.x + this.y * this.y;  
+  return Math.sqrt(this.x * this.x + this.y * this.y);  
 }
 
 Perkogine.Vector2D.prototype.setLength = function(length) {
@@ -144,6 +144,15 @@ Perkogine.Vector2D.prototype.clampXProp = function(min, max) {
 Perkogine.Vector2D.prototype.clampYProp = function(min, max) {
   var ratio = Math.max(min, Math.min(max, this.y)) / this.y;
   this.multiplyScalar(ratio);
+  
+  return this;
+}
+
+Perkogine.Vector2D.prototype.normalize = function() {
+  var m = this.length();
+  if (m > 0) {
+    this.divideScalar(m);
+  }
   
   return this;
 }
