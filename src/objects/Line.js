@@ -9,6 +9,8 @@ Perkogine.Line = function(properties) {
   this.start = properties.start || new Perkogine.Vector2D();
   this.end = properties.end || new Perkogine.Vector2D();
   
+  this.matrix = mat4.create();
+  
   var position = this.position.clone();
   var start = this.start.clone();
   var end = this.end.clone();

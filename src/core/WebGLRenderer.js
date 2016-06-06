@@ -188,8 +188,8 @@ Perkogine.WebGLRenderer.DrawCircle = function(context, object) {
   mat4.translate(object.matrix,object.matrix,[object.position.x, -object.position.y, 0]);
   mat4.rotateZ(object.matrix, object.matrix, Perkogine.Deg2Rad * object.rotation);
   mat4.scale(object.matrix, object.matrix, [
-    object.width,
-    object.height,
+    object.radius,
+    object.radius,
     1
   ]);
   Perkogine.WebGLRenderer.setMatrixUniforms(context, object);
@@ -231,8 +231,8 @@ Perkogine.WebGLRenderer.DrawEllipse = function(context, object) {
   mat4.translate(object.matrix,object.matrix,[object.position.x, -object.position.y, 0]);
   mat4.rotateZ(object.matrix, object.matrix, Perkogine.Deg2Rad * object.rotation);
   mat4.scale(object.matrix, object.matrix, [
-    object.width,
-    object.height,
+    object.width / 2,
+    object.height / 2,
     1
   ]);
   Perkogine.WebGLRenderer.setMatrixUniforms(context, object);
@@ -254,6 +254,47 @@ Perkogine.WebGLRenderer.DrawEllipse = function(context, object) {
                                       
     ctx.drawArrays(ctx.LINE_LOOP, 0, lineBuffer.numberOfItems);
   }
+}
+
+Perkogine.WebGLRenderer.DrawLine = function(context, object) {
+  var ctx = context._ctx;
+  
+  var x = (object.start.x + object.end.x) / 2;
+  var y = (object.start.y + object.end.y) / 2;
+  var subVector = object.end.clone().sub(object.start);
+  
+  if (subVector.x > subVector.y) subVector.clampXProp(-1, 1);
+  else subVector.clampYProp(-1, 1);
+           
+  var vertexBuffer = ctx.createBuffer();
+  var vertices = [
+    -subVector.x / 2, -subVector.y / 2,
+    subVector.x / 2, subVector.y / 2
+  ];
+  
+  ctx.bindBuffer(ctx.ARRAY_BUFFER, vertexBuffer);
+  ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(vertices), ctx.STATIC_DRAW);
+  vertexBuffer.itemSize = 2;
+  vertexBuffer.numberOfItems = vertices.length / vertexBuffer.itemSize;
+  ctx.vertexAttribPointer(context.shaderProgram.vertexPositionAttribute, 
+                         vertexBuffer.itemSize, ctx.FLOAT, false, 0, 0);
+                         
+  ctx.uniform4fv(context.shaderProgram.baseColor, object.borderColor.toArray());
+  
+  
+           
+  mat4.identity(object.matrix);
+  mat4.translate(object.matrix,object.matrix,[-ctx.viewportWidth / 2, ctx.viewportHeight / 2, -20.0]);
+  mat4.translate(object.matrix,object.matrix,[x, -y, 0]);
+  mat4.rotateZ(object.matrix, object.matrix, Perkogine.Deg2Rad * 0);
+  mat4.scale(object.matrix, object.matrix, [
+    object.width,
+    object.height,
+    1
+  ]);
+  Perkogine.WebGLRenderer.setMatrixUniforms(context, object);
+  ctx.lineWidth(object.borderWidth);
+  ctx.drawArrays(ctx.LINE_LOOP, 0, vertexBuffer.numberOfItems);
 }
 
 Perkogine.WebGLRenderer.prototype.clear = function() {
@@ -285,6 +326,8 @@ Perkogine.WebGLRenderer.prototype.Render = function(scene) {
       Perkogine.WebGLRenderer.DrawEllipse(this, object);
     } else if (object instanceof Perkogine.PathShape) {
       Perkogine.WebGLRenderer.DrawEllipse(this, object);
+    } else if (object instanceof Perkogine.Line) {
+      Perkogine.WebGLRenderer.DrawLine(this, object);
     }
   }
 }
