@@ -1,4 +1,7 @@
 # Perkogine
+
+[![Greenkeeper badge](https://badges.greenkeeper.io/Perkovec/Perkogine.svg)](https://greenkeeper.io/)
+
 ## JavaScript 2D game engine
 Perkogine - lightweight canvas library for build 2D games.
 
